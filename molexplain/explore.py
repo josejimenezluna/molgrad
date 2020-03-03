@@ -54,7 +54,7 @@ def clean_data(list_csvs):
                                'st_value': st_value,
                                'st_unit': st_unit})
 
-        df_new.to_csv(os.path.join(PROCESSED_DATA_PATH, '{}.csv'.format(chembl_id)))
+        df_new.to_csv(os.path.join(PROCESSED_DATA_PATH, '{}.csv'.format(chembl_id)), index=None)
 
 
 
