@@ -17,4 +17,3 @@ dependencies:
   - torchvision=0.5.0
   - pip:
     - requests==2.23.0
-
