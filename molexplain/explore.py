@@ -43,6 +43,10 @@ def clean_data(list_csvs):
         st_value = df["Standard Value"].to_numpy()
         st_unit = df["Standard Units"].to_numpy()
 
+        missing_values = np.where(np.isnan(st_value))[0]
+        non_missing_idx = np.setdiff1d(np.arange(len(df)), missing_values)
+        df = df.iloc[non_missing_idx]
+
         failed = []
 
         for idx, smiles in tqdm(enumerate(df["Smiles"].to_list()), total=len(df)):
@@ -70,10 +74,11 @@ def clean_data(list_csvs):
             }
         )
 
-        df_new.to_csv(
-            os.path.join(PROCESSED_DATA_PATH, "{}.csv".format(chembl_id)), index=None
-        )
-        failed_d[chembl_id] = failed
+        if len(df_new) > 0:
+            df_new.to_csv(
+                os.path.join(PROCESSED_DATA_PATH, "{}.csv".format(chembl_id)), index=None
+            )
+        failed_d[chembl_id] = np.unique(failed).tolist()
 
     with open(os.path.join(DATA_PATH, "failed.pt"), "wb") as handle:
         pickle.dump(failed_d, handle)
@@ -166,13 +171,13 @@ if __name__ == "__main__":
     dist = [len(v) for v in ligand_d.values()]
     plt.hist(dist, bins=len(np.unique(dist)))
     plt.title('Distribution of endpoints per ligand')
-    plt.savefig(os.path.join(FIGURES_PATH, 'endpoint_distribution.pdf'))
+    plt.savefig(os.path.join(FIGURES_PATH, 'endpoints_per_ligand.pdf'))
     plt.close()
 
     # Type & unit exploration
     type_d, value_d = type_unit_value_exploration(clean_csvs)
 
-    f, ax = plt.subplots(nrows=5, ncols=3)
+    f, ax = plt.subplots(nrows=5, ncols=3, figsize=(10, 16))
     row = 0
     col = 0
 
@@ -183,5 +188,5 @@ if __name__ == "__main__":
         if col > 2:
             row += 1
             col = 0
-    
-    plt.show()
+    # plt.tight_layout()
+    plt.savefig(os.path.join(FIGURES_PATH, 'endpoint_distribution.pdf'))
