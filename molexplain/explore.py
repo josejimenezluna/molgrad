@@ -109,6 +109,9 @@ def distribution_endpoints(list_csvs):
 
 if __name__ == "__main__":
     matplotlib.rcParams.update({'font.size': 8})
+    matplotlib.use('Agg')
+    os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
+    os.makedirs(FIGURES_PATH, exist_ok=True)
 
     # Generate guide description of datasets
     list_csvs = glob(os.path.join(RAW_DATA_PATH, '*.csv'))
@@ -118,7 +121,6 @@ if __name__ == "__main__":
         pickle.dump(guide, handle)
 
     # Convert to InChi for easy comparison & check overlap
-    os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
     clean_data(list_csvs)
     clean_csvs = glob(os.path.join(PROCESSED_DATA_PATH, '*.csv'))
     chembl_ids = [os.path.basename(p).split('.')[0] for p in clean_csvs]
@@ -128,8 +130,10 @@ if __name__ == "__main__":
     mask = np.zeros_like(overlap)
     mask[np.triu_indices_from(mask)] = True
 
-    sns.heatmap(overlap_df, annot=True, square=True, mask=mask, cbar=False, fmt='d')
-    plt.savefig(FIGURES_PATH, 'overlap.pdf')
+    f, ax = plt.subplots(figsize=(9, 10))
+    sns.heatmap(overlap_df, annot=True, square=True, mask=mask, cbar=False, fmt='d', ax=ax)
+    plt.savefig(os.path.join(FIGURES_PATH, 'overlap.pdf'))
+    plt.tight_layout()
     plt.close()
 
     # Check distribution of endpoints
