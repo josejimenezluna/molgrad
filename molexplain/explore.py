@@ -13,7 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from molexplain.utils import DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH
+from molexplain.utils import DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH, FIGURES_PATH
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -94,6 +94,19 @@ def check_overlap(list_csvs):
     return overlap
 
 
+def distribution_endpoints(list_csvs):
+    ligand_d = {}
+    
+    for csv in list_csvs:
+        df = pd.read_csv(csv)
+        chembl_id = os.path.basename(csv).split('.')[0]
+        print('Checking distribution for endpoint... {}'.format(chembl_id))
+
+        for inchi in tqdm(df['inchi'], total=len(df)):
+            ligand_d.setdefault(inchi, []).append(chembl_id)
+
+    return ligand_d
+
 if __name__ == "__main__":
     matplotlib.rcParams.update({'font.size': 8})
 
@@ -116,4 +129,13 @@ if __name__ == "__main__":
     mask[np.triu_indices_from(mask)] = True
 
     sns.heatmap(overlap_df, annot=True, square=True, mask=mask, cbar=False, fmt='d')
-    plt.show()
+    plt.savefig(FIGURES_PATH, 'overlap.pdf')
+    plt.close()
+
+    # Check distribution of endpoints
+    ligand_d = distribution_endpoints(clean_csvs)
+    dist = [len(v) for v in ligand_d.values()]
+    plt.hist(dist, bins=len(np.unique(dist)))
+    plt.title('Distribution of endpoints per ligand')
+    plt.savefig(os.path.join(FIGURES_PATH, 'endpoint_distribution.pdf'))
+    plt.close()
