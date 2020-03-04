@@ -171,3 +171,17 @@ if __name__ == "__main__":
 
     # Type & unit exploration
     type_d, value_d = type_unit_value_exploration(clean_csvs)
+
+    f, ax = plt.subplots(nrows=5, ncols=3)
+    row = 0
+    col = 0
+
+    for chembl_id, vals in value_d.items():
+        ax[row, col].hist(vals)
+        ax[row, col].set_title(chembl_id)
+        col += 1
+        if col > 2:
+            row += 1
+            col = 0
+    
+    plt.show()
