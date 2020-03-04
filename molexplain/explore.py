@@ -107,6 +107,31 @@ def distribution_endpoints(list_csvs):
 
     return ligand_d
 
+
+def type_unit_value_exploration(list_csvs):
+    type_d = {}
+    value_d = {}
+
+    for csv in list_csvs:
+        df = pd.read_csv(csv)
+        types = df['st_type'].to_list()
+        units = df['st_unit'].to_list()
+        chembl_id = os.path.basename(csv).split('.')[0]
+        value_d[chembl_id] = df['st_value'].to_numpy()
+
+        for t, u_ in zip(types, units):
+            if t in type_d:
+                if not isinstance(u_, str):
+                    u_ = 'nan'
+                if u_ in type_d[t]:
+                    type_d[t][u_] += 1
+                else:
+                    type_d[t][u_] = 1
+            else:
+                type_d[t] = {}
+    return type_d, value_d
+        
+
 if __name__ == "__main__":
     matplotlib.rcParams.update({'font.size': 8})
     matplotlib.use('Agg')
@@ -143,3 +168,6 @@ if __name__ == "__main__":
     plt.title('Distribution of endpoints per ligand')
     plt.savefig(os.path.join(FIGURES_PATH, 'endpoint_distribution.pdf'))
     plt.close()
+
+    # Type & unit exploration
+    type_d, value_d = type_unit_value_exploration(clean_csvs)
