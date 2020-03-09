@@ -52,7 +52,7 @@ HYBRIDIZATION = [
 ]
 
 
-def mol_to_dgl(mol):
+def mol_to_dgl(mol, requires_input_grad=False):
     g = dgl.DGLGraph()
     g.add_nodes(mol.GetNumAtoms())
     g.set_n_initializer(dgl.init.zero_initializer)
@@ -98,7 +98,7 @@ def mol_to_dgl(mol):
         g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
 
     g.ndata["feat"] = torch.FloatTensor(features)
-    g.ndata["feat"].requires_grad = True
+    g.ndata["feat"].requires_grad = requires_input_grad
     return g
 
 
