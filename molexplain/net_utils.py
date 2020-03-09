@@ -105,7 +105,7 @@ def mol_to_dgl(mol, requires_input_grad=False):
 class GraphData(Dataset):
     def __init__(self, inchi, labels, requires_input_grad=False):
         self.inchi = inchi
-        self.labels = np.atleast_1d(labels).astype(np.float32)
+        self.labels = np.array(labels, dtype=np.float32)
         self.requires_input_grad = requires_input_grad
 
         assert len(self.inchi) == len(self.labels)
@@ -116,7 +116,7 @@ class GraphData(Dataset):
                 MolFromInchi(self.inchi[idx]),
                 requires_input_grad=self.requires_input_grad,
             ),
-            torch.from_numpy(self.labels[idx])
+            torch.from_numpy(np.atleast_1d(self.labels[idx]))
         )
 
     def __len__(self):
@@ -130,11 +130,11 @@ def collate_pair(samples):
 
 
 # if __name__ == "__main__":
-#     inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
-#     labels = [0] * 128
+    # inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
+    # labels = [0.0] * 128
 
-#     gd = GraphData(inchis, labels)
-#     g_i, label = gd[1]
+    # gd = GraphData(inchis, labels)
+    # g_i, label = gd[1]
 
 #     from torch.utils.data import DataLoader
 

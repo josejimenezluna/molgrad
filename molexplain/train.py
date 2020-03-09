@@ -37,6 +37,7 @@ def train_loop(loader, model, loss_fn, opt):
 
 
 def eval_loop():
+    # TODO
     pass
 
 
