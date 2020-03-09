@@ -116,7 +116,7 @@ class GraphData(Dataset):
                 MolFromInchi(self.inchi[idx]),
                 requires_input_grad=self.requires_input_grad,
             ),
-            torch.from_numpy(np.atleast_1d(self.labels[idx]))
+            self.labels[idx]
         )
 
     def __len__(self):
@@ -126,18 +126,18 @@ class GraphData(Dataset):
 def collate_pair(samples):
     graphs_i, labels = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
-    return batched_graph_i, labels
+    return batched_graph_i, torch.Tensor(labels)
 
 
-# if __name__ == "__main__":
-    # inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
-    # labels = [0.0] * 128
+if __name__ == "__main__":
+    inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
+    labels = [0.0] * 128
 
-    # gd = GraphData(inchis, labels)
-    # g_i, label = gd[1]
+    gd = GraphData(inchis, labels)
+    g_i, label = gd[1]
 
-#     from torch.utils.data import DataLoader
+    from torch.utils.data import DataLoader
 
-#     data_loader = DataLoader(gd, batch_size=32, shuffle=True, collate_fn=collate_pair)
+    data_loader = DataLoader(gd, batch_size=32, shuffle=True, collate_fn=collate_pair)
 
-#     b_i, labels = next(iter(data_loader))
+    b_i, labels = next(iter(data_loader))

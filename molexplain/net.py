@@ -48,19 +48,12 @@ class Regressor(nn.Module):
         self.linear = nn.Linear(hidden_dim, hidden_dim)
         self.output = nn.Linear(hidden_dim, n_tasks)
 
-    def _forward_once(self, g):
-        h = g.ndata['feat']
-        for conv in self.layers:
-            h = conv(g, h)
-        g.ndata['h'] = h
-        return dgl.mean_nodes(g, 'h')
-
     def forward(self, g):
         h = g.ndata['feat']
         for conv in self.layers:
             h = conv(g, h)
         g.ndata['h'] = h
-        latent = dgl.mean_nodes(g, 'h')
+        latent = dgl.sum_nodes(g, 'h')
         latent = torch.relu(self.linear(latent))
         return self.output(latent)
 
