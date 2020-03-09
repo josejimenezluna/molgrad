@@ -67,6 +67,7 @@ class Regressor(nn.Module):
         latent = torch.relu(self.linear(latent))
         return self.output(latent)
 
+
 if __name__ == "__main__":
     from molexplain.net_utils import GraphData, collate_pair
     inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
@@ -77,10 +78,11 @@ if __name__ == "__main__":
 
     from torch.utils.data import DataLoader
 
-    data_loader = DataLoader(gd, batch_size=32, shuffle=True, collate_fn=collate_pair)
+    data_loader = DataLoader(gd, batch_size=1, shuffle=True, collate_fn=collate_pair)
 
     b_i, labels = next(iter(data_loader))
     n_feat = b_i.ndata['feat'].shape[1]
 
     net = Regressor(n_feat, 128)
-    d = net(b_i)
+    out = net(b_i)
+    out.backward()

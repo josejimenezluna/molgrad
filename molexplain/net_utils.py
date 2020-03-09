@@ -103,14 +103,21 @@ def mol_to_dgl(mol, requires_input_grad=False):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchis, labels):
+    def __init__(self, inchis, labels, requires_input_grad=False):
         self.inchis = inchis
         self.labels = labels
+        self.requires_input_grad = requires_input_grad
 
         assert len(self.inchis) == len(self.labels)
 
     def __getitem__(self, idx):
-        return mol_to_dgl(MolFromInchi(self.inchis[idx])), self.labels[idx]
+        return (
+            mol_to_dgl(
+                MolFromInchi(self.inchis[idx]),
+                requires_input_grad=self.requires_input_grad,
+            ),
+            self.labels[idx]
+        )
 
     def __len__(self):
         return len(self.inchis)
