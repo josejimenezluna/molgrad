@@ -39,10 +39,12 @@ class GCN(nn.Module):
 
 
 class Regressor(nn.Module):
-    def __init__(self, in_dim=42, hidden_dim=512, n_tasks=1):
+    def __init__(self, in_dim=42, hidden_dim=1024, n_tasks=1):
         super(Regressor, self).__init__()
         self.layers = nn.ModuleList([
             GCN(in_dim, hidden_dim, F.relu),
+            GCN(hidden_dim, hidden_dim, F.relu),
+            GCN(hidden_dim, hidden_dim, F.relu),
             GCN(hidden_dim, hidden_dim, F.relu)
         ])
         self.linear = nn.Linear(hidden_dim, hidden_dim)
