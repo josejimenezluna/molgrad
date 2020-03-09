@@ -126,7 +126,7 @@ class GraphData(Dataset):
 def collate_pair(samples):
     graphs_i, labels = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
-    return batched_graph_i, torch.FloatTensor(labels)
+    return batched_graph_i, labels
 
 
 # if __name__ == "__main__":
