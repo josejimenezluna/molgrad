@@ -190,3 +190,4 @@ if __name__ == "__main__":
             col = 0
     # plt.tight_layout()
     plt.savefig(os.path.join(FIGURES_PATH, 'endpoint_distribution.pdf'))
+    plt.close()
