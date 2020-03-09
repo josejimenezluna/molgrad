@@ -4,9 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 # Sends a message of node feature h.
 msg = fn.copy_src(src='h', out='m')
 
@@ -68,21 +65,19 @@ class Regressor(nn.Module):
         return self.output(latent)
 
 
-if __name__ == "__main__":
-    from molexplain.net_utils import GraphData, collate_pair
-    inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
-    labels = [0] * 128
+# if __name__ == "__main__":
+#     from molexplain.net_utils import GraphData, collate_pair
+#     inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
+#     labels = [1] * 128
 
-    gd = GraphData(inchis, labels)
-    g_i, label = gd[1]
+#     gd = GraphData(inchis, labels, requires_input_grad=True)
+#     g, label = gd[1]
 
-    from torch.utils.data import DataLoader
+#     from torch.utils.data import DataLoader
+#     n_feat = g.ndata['feat'].shape[1]
 
-    data_loader = DataLoader(gd, batch_size=1, shuffle=True, collate_fn=collate_pair)
-
-    b_i, labels = next(iter(data_loader))
-    n_feat = b_i.ndata['feat'].shape[1]
-
-    net = Regressor(n_feat, 128)
-    out = net(b_i)
-    out.backward()
+#     net = Regressor(n_feat, 128)
+#     out = net(g)
+#     out.backward()
+    
+#     print(g.ndata['feat'].grad)
