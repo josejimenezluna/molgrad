@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from molexplain.net import Regressor
-from molexplain.net_utils import GraphData
+from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import PROCESSED_DATA_PATH
 
 BATCH_SIZE = 32
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, 'CHEMBL3301365.csv'), header=0)
     data = GraphData(df.inchi.to_list(), df.st_value.to_list())
 
-    loader = DataLoader(data, batch_size=BATCH_SIZE, shuffle=True)
+    loader = DataLoader(data, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_pair)
 
     model = Regressor(in_dim=42).to(DEVICE)
     opt = Adam(model.parameters())
