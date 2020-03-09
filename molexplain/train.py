@@ -14,7 +14,7 @@ from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import PROCESSED_DATA_PATH
 
 BATCH_SIZE = 32
-N_EPOCHS = 200
+N_EPOCHS = 1000
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
@@ -79,7 +79,11 @@ if __name__ == "__main__":
         train_losses.extend(t_l)
 
     loader = DataLoader(
-        data, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_pair, num_workers=NUM_WORKERS
+        data,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        collate_fn=collate_pair,
+        num_workers=NUM_WORKERS,
     )
     ys, yhats = eval_loop(loader, model)
     print(np.corrcoef((ys.squeeze().numpy(), yhats.squeeze().numpy())))
