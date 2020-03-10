@@ -1,10 +1,11 @@
-import os
 import multiprocessing
+import os
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
+from sklearn.model_selection import train_test_split
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -17,6 +18,8 @@ BATCH_SIZE = 32
 N_EPOCHS = 1000
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
+
+rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
 
 def train_loop(loader, model, loss_fn, opt):
@@ -58,10 +61,14 @@ def eval_loop(loader, model):
 
 if __name__ == "__main__":
     df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301365.csv"), header=0)
-    data = GraphData(df.inchi.to_list(), df.st_value.to_list())
+    # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
+    df_train, df_test = train_test_split(df, test_size=.2)
 
-    loader = DataLoader(
-        data,
+    data_train = GraphData(df_train.inchi.to_list(), df_train.st_value.to_list())
+    data_test = GraphData(df_test.inchi.to_list(), df_test.st_value.to_list())
+
+    loader_train = DataLoader(
+        data_train,
         batch_size=BATCH_SIZE,
         shuffle=True,
         collate_fn=collate_pair,
@@ -74,16 +81,18 @@ if __name__ == "__main__":
     train_losses = []
 
     for epoch_no in range(N_EPOCHS):
-        print("Epoch {}/{}...".format(epoch_no + 1, N_EPOCHS))
-        t_l = train_loop(loader, model, F.mse_loss, opt)
+        print("Train epoch {}/{}...".format(epoch_no + 1, N_EPOCHS))
+        t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-    loader = DataLoader(
-        data,
+    print('Now evaluating on the test set...')
+    loader_test = DataLoader(
+        data_test,
         batch_size=BATCH_SIZE,
         shuffle=False,
         collate_fn=collate_pair,
         num_workers=NUM_WORKERS,
     )
-    ys, yhats = eval_loop(loader, model)
+    ys, yhats = eval_loop(loader_test, model)
     print(np.corrcoef((ys.squeeze().numpy(), yhats.squeeze().numpy())))
+    print(rmse(ys.squeeze().numpy(), yhats.squeeze().numpy()))
