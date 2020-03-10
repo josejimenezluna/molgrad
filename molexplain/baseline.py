@@ -3,7 +3,7 @@ import multiprocessing
 
 import numpy as np
 import pandas as pd
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, DataStructs
 from rdkit.Chem.inchi import MolFromInchi
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -28,17 +28,17 @@ def featurize(inchis):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301365.csv"), header=0)
+    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301372.csv"), header=0)
     # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
-    df_train, df_test = train_test_split(df, test_size=.2)
+    df_train, df_test = train_test_split(df, test_size=.2, random_state=1337)
 
     features_train = featurize(df_train['inchi'].to_list())
     features_test = featurize(df_test['inchi'].to_list())
 
-    rf = RandomForestRegressor(n_estimators=1000, n_jobs=NUM_WORKERS)
-    rf.fit(features_train, df_train['st_value'].numpy())
+    rf = RandomForestRegressor(n_estimators=1000, n_jobs=1)
+    rf.fit(features_train, df_train['st_value'].values)
 
     yhat = rf.predict(features_test)
 
-    print(np.corrcoef((df_test['st_value'].numpy(), yhat)))
-    print(rmse(df_test['st_value'].numpy(), yhat))
+    print(np.corrcoef((df_test['st_value'].values, yhat)))
+    print(rmse(df_test['st_value'].values, yhat))

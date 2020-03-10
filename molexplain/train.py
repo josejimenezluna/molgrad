@@ -43,14 +43,15 @@ def train_loop(loader, model, loss_fn, opt):
     return losses
 
 
-def eval_loop(loader, model):
+def eval_loop(loader, model, progress=True):
     model = model.eval()
-    progress = tqdm(loader)
+    if progress:
+        loader = tqdm(loader)
 
     ys = []
     yhats = []
 
-    for g, label in progress:
+    for g, label in loader:
         with torch.no_grad():
             g = g.to(DEVICE)
             out = model(g)
@@ -59,10 +60,16 @@ def eval_loop(loader, model):
     return torch.cat(ys), torch.cat(yhats)
 
 
+def metrics(ys, yhats):
+    r = np.corrcoef((ys.squeeze().numpy(), yhats.squeeze().numpy()))[0, 1]
+    rmse_ = rmse(ys.squeeze().numpy(), yhats.squeeze().numpy())
+    return r, rmse_
+
+
 if __name__ == "__main__":
     df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301365.csv"), header=0)
     # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
-    df_train, df_test = train_test_split(df, test_size=.2)
+    df_train, df_test = train_test_split(df, test_size=.2, random_state=1337)
 
     data_train = GraphData(df_train.inchi.to_list(), df_train.st_value.to_list())
     data_test = GraphData(df_test.inchi.to_list(), df_test.st_value.to_list())
@@ -71,6 +78,14 @@ if __name__ == "__main__":
         data_train,
         batch_size=BATCH_SIZE,
         shuffle=True,
+        collate_fn=collate_pair,
+        num_workers=NUM_WORKERS,
+    )
+
+    loader_test = DataLoader(
+        data_test,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
         collate_fn=collate_pair,
         num_workers=NUM_WORKERS,
     )
@@ -85,14 +100,6 @@ if __name__ == "__main__":
         t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-    print('Now evaluating on the test set...')
-    loader_test = DataLoader(
-        data_test,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        collate_fn=collate_pair,
-        num_workers=NUM_WORKERS,
-    )
-    ys, yhats = eval_loop(loader_test, model)
-    print(np.corrcoef((ys.squeeze().numpy(), yhats.squeeze().numpy())))
-    print(rmse(ys.squeeze().numpy(), yhats.squeeze().numpy()))
+        y_test, yhat_test = eval_loop(loader_test, model, progress=False)
+        r, rmse_ = metrics(y_test, yhat_test)
+        print('Test R: {:.2f}, RMSE: {:.2f}'.format(r, rmse_))
