@@ -2,6 +2,8 @@ import numpy as np
 import rdkit
 import torch
 from rdkit.Chem.inchi import MolFromInchi
+from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
+from rdkit.Chem import GetPeriodicTable
 from torch.utils.data import Dataset
 
 import dgl
@@ -60,6 +62,9 @@ def mol_to_dgl(mol, requires_input_grad=False):
 
     features = []
 
+    pd = GetPeriodicTable()
+    ComputeGasteigerCharges(mol)
+
     for atom in mol.GetAtoms():
         atom_feat = []
         atom_type = [0] * len(ATOM_TYPES)
@@ -81,6 +86,10 @@ def mol_to_dgl(mol, requires_input_grad=False):
         rad = atom.GetNumRadicalElectrons()
         ring = int(atom.IsInRing())
 
+        mass = pd.GetAtomicWeight(atom.GetSymbol())
+        vdw = pd.GetRvdw(atom.GetSymbol())
+        pcharge = float(atom.GetProp('_GasteigerCharge'))
+
         atom_feat.extend(atom_type)
         atom_feat.extend(chiral)
         atom_feat.append(ex_valence)
@@ -92,6 +101,9 @@ def mol_to_dgl(mol, requires_input_grad=False):
         atom_feat.append(im_hs)
         atom_feat.append(rad)
         atom_feat.append(ring)
+        atom_feat.append(mass)
+        atom_feat.append(vdw)
+        atom_feat.append(pcharge)
         features.append(atom_feat)
 
     for bond in mol.GetBonds():

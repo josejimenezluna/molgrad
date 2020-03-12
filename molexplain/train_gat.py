@@ -33,7 +33,7 @@ def train_loop(loader, model, loss_fn, opt):
         label = label.unsqueeze(1).to(DEVICE)
 
         opt.zero_grad()
-        out = model(g)
+        out = model(g).squeeze(0)
         loss = loss_fn(label, out)
         loss.backward()
         opt.step()
@@ -56,7 +56,7 @@ def eval_loop(loader, model, progress=True):
             g = g.to(DEVICE)
             out = model(g)
             ys.append(label.unsqueeze(1).cpu())
-            yhats.append(out.cpu())
+            yhats.append(out.squeeze(0).cpu())
     return torch.cat(ys), torch.cat(yhats)
 
 
@@ -67,8 +67,8 @@ def metrics(ys, yhats):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301364.csv"), header=0)
-    df['st_value'] = -np.log10(1e-9 *  df['st_value'])
+    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301370.csv"), header=0)
+    # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=1337)
 
     data_train = GraphData(df_train.inchi.to_list(), df_train.st_value.to_list())
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         residual=True,
     ).to(DEVICE)
 
-    opt = Adam(model.parameters())
+    opt = Adam(model.parameters(), lr=1e-4)
 
     train_losses = []
 
