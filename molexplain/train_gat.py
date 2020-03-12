@@ -67,7 +67,7 @@ def metrics(ys, yhats):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301370.csv"), header=0)
+    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301372.csv"), header=0)
     # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=1337)
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     model = GAT(
         num_layers=6,
-        in_dim=42,
+        in_dim=45,
         num_hidden=128,
         num_classes=1,
         heads=([12] * 6) + [32],
