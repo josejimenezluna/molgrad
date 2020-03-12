@@ -10,7 +10,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from molexplain.net import Regressor
+from molexplain.net_gat import GAT
 from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import PROCESSED_DATA_PATH
 
@@ -67,9 +67,9 @@ def metrics(ys, yhats):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301372.csv"), header=0)
-    # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
-    df_train, df_test = train_test_split(df, test_size=.2, random_state=1337)
+    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301364.csv"), header=0)
+    df['st_value'] = -np.log10(1e-9 *  df['st_value'])
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=1337)
 
     data_train = GraphData(df_train.inchi.to_list(), df_train.st_value.to_list())
     data_test = GraphData(df_test.inchi.to_list(), df_test.st_value.to_list())
@@ -90,7 +90,16 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    model = Regressor(in_dim=42).to(DEVICE)
+    model = GAT(
+        num_layers=6,
+        in_dim=42,
+        num_hidden=128,
+        num_classes=1,
+        heads=([12] * 6) + [32],
+        activation=F.elu,
+        residual=True,
+    ).to(DEVICE)
+
     opt = Adam(model.parameters())
 
     train_losses = []
@@ -102,4 +111,4 @@ if __name__ == "__main__":
 
         y_test, yhat_test = eval_loop(loader_test, model, progress=False)
         r, rmse_ = metrics(y_test, yhat_test)
-        print('Test R: {:.2f}, RMSE: {:.2f}'.format(r, rmse_))
+        print("Test R: {:.2f}, RMSE: {:.2f}".format(r, rmse_))
