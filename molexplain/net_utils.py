@@ -1,4 +1,6 @@
+import os
 import numpy as np
+import pandas as pd
 import rdkit
 import torch
 from rdkit.Chem.inchi import MolFromInchi
@@ -88,7 +90,7 @@ def mol_to_dgl(mol, requires_input_grad=False):
 
         mass = pd.GetAtomicWeight(atom.GetSymbol())
         vdw = pd.GetRvdw(atom.GetSymbol())
-        pcharge = float(atom.GetProp('_GasteigerCharge'))
+        pcharge = float(atom.GetProp("_GasteigerCharge"))
 
         atom_feat.extend(atom_type)
         atom_feat.extend(chiral)
@@ -115,9 +117,10 @@ def mol_to_dgl(mol, requires_input_grad=False):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchi, labels, requires_input_grad=False):
+    def __init__(self, inchi, labels, mask, requires_input_grad=False):
         self.inchi = inchi
         self.labels = np.array(labels, dtype=np.float32)
+        self.mask = np.array(mask, dtype=np.bool)
         self.requires_input_grad = requires_input_grad
 
         assert len(self.inchi) == len(self.labels)
@@ -128,7 +131,8 @@ class GraphData(Dataset):
                 MolFromInchi(self.inchi[idx]),
                 requires_input_grad=self.requires_input_grad,
             ),
-            self.labels[idx]
+            self.labels[idx, :],
+            self.mask[idx, :],
         )
 
     def __len__(self):
@@ -136,20 +140,46 @@ class GraphData(Dataset):
 
 
 def collate_pair(samples):
-    graphs_i, labels = map(list, zip(*samples))
+    graphs_i, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
-    return batched_graph_i, torch.Tensor(labels)
+    return batched_graph_i, torch.Tensor(labels), torch.BoolTensor(masks)
 
 
 if __name__ == "__main__":
-    inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
-    labels = [0.0] * 128
+    from molexplain.utils import PROCESSED_DATA_PATH
 
-    gd = GraphData(inchis, labels)
-    g_i, label = gd[1]
+    chembl_ids = [
+        "CHEMBL3301365.csv",
+        "CHEMBL3301366.csv",
+        "CHEMBL3301370.csv",
+        "CHEMBL3301371.csv",
+        "CHEMBL3301372.csv",
+    ]
+
+    dfs = []
+    for chembl_id in chembl_ids:
+        df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, chembl_id))
+        dfs.append(df)
+
+    needed_cols = ["inchi", "st_value"]
+    merged = dfs[0][needed_cols]
+    for df in dfs[1:]:
+        merged = pd.merge(merged, df[needed_cols], how="outer", on="inchi")
+    
+    inchis = merged.inchi.tolist()
+    values = merged[['st_value_x', 'st_value_y', 'st_value']].values
+    mask = np.logical_not(np.isnan(values))
+
+    np.save(os.path.join(PROCESSED_DATA_PATH, 'inchis.npy'), arr=inchis)
+    np.save(os.path.join(PROCESSED_DATA_PATH, 'values.npy'), arr=values)
+    np.save(os.path.join(PROCESSED_DATA_PATH, 'mask.npy'), arr=mask)
+
+    gd = GraphData(merged.inchi.tolist(), values, mask)
+
+    g_i, label, m = gd[1]
 
     from torch.utils.data import DataLoader
 
     data_loader = DataLoader(gd, batch_size=32, shuffle=True, collate_fn=collate_pair)
 
-    b_i, labels = next(iter(data_loader))
+    b_i, labels, ms = next(iter(data_loader))
