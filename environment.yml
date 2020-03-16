@@ -15,5 +15,7 @@ dependencies:
   - rdkit=2019.09.3.0
   - scipy=1.4.1
   - torchvision=0.5.0
+  - tqdm
+  - scikit-learn
   - pip:
     - requests==2.23.0
