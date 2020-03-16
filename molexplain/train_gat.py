@@ -14,7 +14,7 @@ from molexplain.net_gat import GAT
 from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import PROCESSED_DATA_PATH
 
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 N_EPOCHS = 1000
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
@@ -67,12 +67,12 @@ def metrics(ys, yhats):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301370.csv"), header=0)
-    # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
-    df_train, df_test = train_test_split(df, test_size=0.2, random_state=1337)
+    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, 'inchis.npy'))
+    values = np.load(os.path.join(PROCESSED_DATA_PATH, 'values.npy'))
+    mask = np.load(os.path.join(PROCESSED_DATA_PATH, 'mask.npy'))
 
-    data_train = GraphData(df_train.inchi.to_list(), df_train.st_value.to_list())
-    data_test = GraphData(df_test.inchi.to_list(), df_test.st_value.to_list())
+    data_train = GraphData(inchis, values, mask)
+    # data_test = GraphData(inchis, values, mask)
 
     loader_train = DataLoader(
         data_train,
@@ -82,13 +82,13 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    loader_test = DataLoader(
-        data_test,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        collate_fn=collate_pair,
-        num_workers=NUM_WORKERS,
-    )
+    # loader_test = DataLoader(
+    #     data_test,
+    #     batch_size=BATCH_SIZE,
+    #     shuffle=False,
+    #     collate_fn=collate_pair,
+    #     num_workers=NUM_WORKERS,
+    # )
 
     model = GAT(
         num_layers=6,
@@ -109,6 +109,6 @@ if __name__ == "__main__":
         t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-        y_test, yhat_test = eval_loop(loader_test, model, progress=False)
-        r, rmse_ = metrics(y_test, yhat_test)
-        print("Test R: {:.2f}, RMSE: {:.2f}".format(r, rmse_))
+        # y_test, yhat_test = eval_loop(loader_test, model, progress=False)
+        # r, rmse_ = metrics(y_test, yhat_test)
+        # print("Test R: {:.2f}, RMSE: {:.2f}".format(r, rmse_))
