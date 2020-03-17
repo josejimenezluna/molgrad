@@ -53,29 +53,48 @@ def eval_loop(loader, model, progress=True):
 
     ys = []
     yhats = []
+    masks = []
 
-    for g, label in loader:
+    for g, label, mask in loader:
         with torch.no_grad():
             g = g.to(DEVICE)
             out = model(g)
-            ys.append(label.unsqueeze(1).cpu())
-            yhats.append(out.squeeze(0).cpu())
-    return torch.cat(ys), torch.cat(yhats)
+            ys.append(label.cpu())
+            yhats.append(out.cpu())
+            masks.append(mask)
+    return torch.cat(ys), torch.cat(yhats), torch.cat(masks)
 
 
-def metrics(ys, yhats):
-    r = np.corrcoef((ys.squeeze().numpy(), yhats.squeeze().numpy()))[0, 1]
-    rmse_ = rmse(ys.squeeze().numpy(), yhats.squeeze().numpy())
-    return r, rmse_
+def metrics(ys, yhats, masks):
+    n_tasks = ys.shape[1]
+    rs = []
+    rmses = []
+
+    for task_no in range(n_tasks):
+        y, yhat = (
+            ys[masks[:, task_no], task_no].numpy(),
+            yhats[masks[:, task_no], task_no].numpy(),
+        )
+        rs.append(np.corrcoef((y, yhat))[0, 1])
+        rmses.append(rmse(y, yhat))
+    return rs, rmses
 
 
 if __name__ == "__main__":
-    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, 'inchis.npy'))
-    values = np.load(os.path.join(PROCESSED_DATA_PATH, 'values.npy'))
-    mask = np.load(os.path.join(PROCESSED_DATA_PATH, 'mask.npy'))
+    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+    values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
+    mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
-    data_train = GraphData(inchis, values, mask)
-    # data_test = GraphData(inchis, values, mask)
+    idx_train, idx_test = train_test_split(
+        np.arange(len(inchis)), test_size=0.2, random_state=1337
+    )
+
+    inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
+    values_train, values_test = values[idx_train, :], values[idx_test, :]
+    mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
+
+    data_train = GraphData(inchis_train, values_train, mask_train)
+    data_test = GraphData(inchis_test, values_test, mask_test)
 
     loader_train = DataLoader(
         data_train,
@@ -85,13 +104,13 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    # loader_test = DataLoader(
-    #     data_test,
-    #     batch_size=BATCH_SIZE,
-    #     shuffle=False,
-    #     collate_fn=collate_pair,
-    #     num_workers=NUM_WORKERS,
-    # )
+    loader_test = DataLoader(
+        data_test,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        collate_fn=collate_pair,
+        num_workers=NUM_WORKERS,
+    )
 
     model = GAT(
         num_layers=6,
@@ -112,6 +131,12 @@ if __name__ == "__main__":
         t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-        # y_test, yhat_test = eval_loop(loader_test, model, progress=False)
-        # r, rmse_ = metrics(y_test, yhat_test)
-        # print("Test R: {:.2f}, RMSE: {:.2f}".format(r, rmse_))
+        y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
+        r, rmse_ = metrics(y_test, yhat_test, mask_test)
+        print(
+            "Test R:[{}], RMSE: [{}]".format(
+                "\t".join("{:.3f}".format(x) for x in r),
+                "\t".join("{:.3f}".format(x) for x in rmse_),
+            )
+        )
+
