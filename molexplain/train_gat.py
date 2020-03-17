@@ -28,12 +28,15 @@ def train_loop(loader, model, loss_fn, opt):
 
     losses = []
 
-    for g, label in progress:
+    for g, label, mask in progress:
         g = g.to(DEVICE)
-        label = label.unsqueeze(1).to(DEVICE)
+        label = label.to(DEVICE)
+        mask = mask.to(DEVICE)
+        label = label[mask]
 
         opt.zero_grad()
-        out = model(g).squeeze(0)
+        out = model(g)
+        out = out[mask]
         loss = loss_fn(label, out)
         loss.backward()
         opt.step()
@@ -94,7 +97,7 @@ if __name__ == "__main__":
         num_layers=6,
         in_dim=45,
         num_hidden=128,
-        num_classes=1,
+        num_classes=5,
         heads=([12] * 6) + [32],
         activation=F.relu,
         residual=True,

@@ -15,7 +15,7 @@ class GAT(nn.Module):
         self.num_layers = num_layers
         self.gat_layers = nn.ModuleList()
         self.activation = activation
-        self.linear = nn.Linear(heads[-1], 1)
+        self.linear = nn.Linear(heads[-1], num_classes)
         # input projection (no residual)
         self.gat_layers.append(
             GATConv(
@@ -54,8 +54,8 @@ class GAT(nn.Module):
         for l in range(self.num_layers):
             h = self.gat_layers[l](g, h).flatten(1)
         # output projection
-        g.ndata['h'] = self.gat_layers[-1](g, h).squeeze()
-        latent = dgl.sum_nodes(g, 'h').unsqueeze(0)
+        g.ndata['h'] = self.gat_layers[-1](g, h)
+        latent = dgl.sum_nodes(g, 'h').mean(axis=2)
         return self.linear(latent)
 
 
