@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from molexplain.net import GAT
 from molexplain.net_utils import GraphData, collate_pair
-from molexplain.utils import PROCESSED_DATA_PATH
+from molexplain.utils import PROCESSED_DATA_PATH, MODELS_PATH
 
 NUM_LAYERS = 6
 NUM_HEADS = 12
@@ -21,7 +21,7 @@ NUM_OUTHEADS = 32
 
 BATCH_SIZE = 32
 INITIAL_LR = 1e-5
-N_EPOCHS = 1000
+N_EPOCHS = 500
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
@@ -148,3 +148,6 @@ if __name__ == "__main__":
                 "\t".join("{:.3f}".format(x) for x in rmse_),
             )
         )
+
+    os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
+    torch.save(model, os.path.join(MODELS_PATH, 'AZ_ChEMBL.pt'))
