@@ -13,43 +13,46 @@ from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 def gen_steps(graph, n_steps):
     graphs = []
+    feat = graph.ndata['feat'].detach()
 
     for step in range(n_steps + 1):
-        new = graph
-        new.ndata["feat"] = step / n_steps * graph.ndata["feat"]
-        graphs.append(new)
+        g = deepcopy(graph)
+        g.ndata["feat"] = step / n_steps * feat
+        g.ndata['feat'].requires_grad = True
+        graphs.append(g)
     return graphs
 
 
 def integrated_gradients(graph, model, task, n_steps=50):
     graphs = gen_steps(graph, n_steps=n_steps)
-
     values_steps = []
 
     for g in graphs:
-        g = g.to(DEVICE)
+        # g = g.to(DEVICE)
         preds = model(g)
-        preds[task].backward()
+        preds[0][task].backward(retain_graph=True)
         atom_grads = g.ndata["feat"].grad
         values_steps.append(atom_grads)
     return torch.cat(values_steps)
 
 
-# if __name__ == "__main__":
-#     model = torch.load(os.path.join(MODELS_PATH, "AZ_ChEMBL.pt")).to(DEVICE)
+if __name__ == "__main__":
+    model = torch.load(os.path.join(MODELS_PATH, "AZ_ChEMBL.pt")).cpu()
 
-#     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
-#     values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
-#     mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
+    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+    values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
+    mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
-#     data = GraphData(inchis, values, mask, requires_input_grad=True)
-#     data[0]
+    data = GraphData(inchis, values, mask, requires_input_grad=True)
+    graph, _, _ = data[0]
 
-#     loader = DataLoader(
-#         data,
-#         batch_size=1,
-#         shuffle=True,
-#         collate_fn=collate_pair,
-#     )
+    preds = model(graph)
+    preds[0][0].backward(retain_graph=True)
+    print(graph.ndata["feat"].grad)
 
-#     graph, _, _ = next(iter(loader))
+    graphs = gen_steps(graph, 50)
+    g = graphs[-1]
+    preds = model(g)
+    preds[0][0].backward(retain_graph=True)
+    print(g.ndata["feat"].grad)
+

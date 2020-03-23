@@ -61,37 +61,37 @@ class GAT(nn.Module):
         return self.linear(latent)
 
 
-if __name__ == "__main__":
-    import os
-    import numpy as np
-    from molexplain.net_utils import GraphData, collate_pair
-    from molexplain.utils import PROCESSED_DATA_PATH
-    from torch.utils.data import DataLoader
+# if __name__ == "__main__":
+#     import os
+#     import numpy as np
+#     from molexplain.net_utils import GraphData, collate_pair
+#     from molexplain.utils import PROCESSED_DATA_PATH
+#     from torch.utils.data import DataLoader
 
 
-    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
-    values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
-    mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
+#     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+#     values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
+#     mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
-    gd = GraphData(inchis, values, mask, requires_input_grad=True)
-    g, _, _ = gd[1]
-    n_feat = g.ndata["feat"].shape[1]
+#     gd = GraphData(inchis, values, mask, requires_input_grad=True)
+#     g, _, _ = gd[1]
+#     n_feat = g.ndata["feat"].shape[1]
 
-    loader = DataLoader(gd, batch_size=1, collate_fn=collate_pair)
+#     # loader = DataLoader(gd, batch_size=1, collate_fn=collate_pair)
 
-    net = GAT(
-        num_layers=6,
-        in_dim=n_feat,
-        num_hidden=128,
-        num_classes=5,
-        heads=([12] * 6) + [32],
-        activation=F.relu,
-        residual=True,
-    )
+#     net = GAT(
+#         num_layers=6,
+#         in_dim=n_feat,
+#         num_hidden=128,
+#         num_classes=5,
+#         heads=([12] * 6) + [32],
+#         activation=F.relu,
+#         residual=True,
+#     )
 
-    # g, _, _ = next(iter(loader))
+#     # g, _, _ = next(iter(loader))
 
-    out = net(g)
-    out[0, 0].backward(retain_graph=True)
+#     out = net(g)
+#     out[0, 0].backward(retain_graph=True)
 
-    print(g.ndata["feat"].grad)
+#     print(g.ndata["feat"].grad)
