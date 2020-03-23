@@ -5,7 +5,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-
 from molexplain.net_utils import GraphData, collate_pair
 from molexplain.train import DEVICE
 from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
@@ -13,12 +12,12 @@ from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 def gen_steps(graph, n_steps):
     graphs = []
-    feat = graph.ndata['feat'].detach()
+    feat = graph.ndata["feat"].detach()
 
     for step in range(n_steps + 1):
         g = deepcopy(graph)
         g.ndata["feat"] = step / n_steps * feat
-        g.ndata['feat'].requires_grad = True
+        g.ndata["feat"].requires_grad = True
         graphs.append(g)
     return graphs
 
@@ -55,4 +54,3 @@ if __name__ == "__main__":
     preds = model(g)
     preds[0][0].backward(retain_graph=True)
     print(g.ndata["feat"].grad)
-
