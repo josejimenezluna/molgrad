@@ -1,67 +1,67 @@
-import dgl
-import dgl.function as fn
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Sends a message of node feature h.
-msg = fn.copy_src(src='h', out='m')
+import dgl
+import dgl.function as fn
+from dgl.nn.pytorch import GATConv, edge_softmax
 
 
-def reduce_f(nodes):
-    accum = torch.mean(nodes.mailbox['m'], 1)
-    return {'h': accum}
-
-
-class NodeApplyModule(nn.Module):
-    def __init__(self, in_feats, out_feats, activation):
-        super(NodeApplyModule, self).__init__()
-        self.linear = nn.Linear(in_feats, out_feats)
+class GAT(nn.Module):
+    def __init__(
+        self, num_layers, in_dim, num_hidden, num_classes, heads, activation, residual
+    ):
+        super(GAT, self).__init__()
+        self.num_layers = num_layers
+        self.gat_layers = nn.ModuleList()
         self.activation = activation
-
-    def forward(self, node):
-        h = self.linear(node.data['h'])
-        h = self.activation(h)
-        return {'h': h}
-
-
-class GCN(nn.Module):
-    def __init__(self, in_feats, out_feats, activation):
-        super(GCN, self).__init__()
-        self.apply_mod = NodeApplyModule(in_feats, out_feats, activation)
-
-    def forward(self, g, feature):
-        # Initialize the node features with h.
-        g.ndata['h'] = feature
-        g.update_all(msg, reduce_f)
-        g.apply_nodes(func=self.apply_mod)
-        return g.ndata.pop('h')
-
-
-class Regressor(nn.Module):
-    def __init__(self, in_dim=42, hidden_dim=1024, n_tasks=1):
-        super(Regressor, self).__init__()
-        self.layers = nn.ModuleList([
-            GCN(in_dim, hidden_dim, F.relu),
-            GCN(hidden_dim, hidden_dim, F.relu),
-            GCN(hidden_dim, hidden_dim, F.relu),
-            GCN(hidden_dim, hidden_dim, F.relu)
-        ])
-        self.linear = nn.Linear(hidden_dim, hidden_dim)
-        self.output = nn.Linear(hidden_dim, n_tasks)
+        self.linear = nn.Linear(heads[-1], num_classes)
+        # input projection (no residual)
+        self.gat_layers.append(
+            GATConv(
+                in_feats=in_dim,
+                out_feats=num_hidden,
+                num_heads=heads[0],
+                residual=False,
+                activation=self.activation,
+            )
+        )
+        # hidden layers
+        for l in range(1, num_layers):
+            # due to multi-head, the in_dim = num_hidden * num_heads
+            self.gat_layers.append(
+                GATConv(
+                    in_feats=num_hidden * heads[l - 1],
+                    out_feats=num_hidden,
+                    num_heads=heads[l],
+                    residual=residual,
+                    activation=self.activation,
+                )
+            )
+        # output projection
+        self.gat_layers.append(
+            GATConv(
+                in_feats=num_hidden * heads[-2],
+                out_feats=num_classes,
+                num_heads=heads[-1],
+                residual=True,
+                activation=None,
+            )
+        )
 
     def forward(self, g):
-        h = g.ndata['feat']
-        for conv in self.layers:
-            h = conv(g, h)
-        g.ndata['h'] = h
-        latent = dgl.sum_nodes(g, 'h')
-        latent = torch.relu(self.linear(latent))
-        return self.output(latent)
+        h = g.ndata["feat"]
+        for l in range(self.num_layers):
+            h = self.gat_layers[l](g, h).flatten(1)
+        # output projection
+        g.ndata['h'] = self.gat_layers[-1](g, h)
+        latent = dgl.sum_nodes(g, 'h').mean(axis=2)
+        return self.linear(latent)
 
 
 # if __name__ == "__main__":
 #     from molexplain.net_utils import GraphData, collate_pair
+
 #     inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
 #     labels = [1] * 128
 
@@ -69,10 +69,19 @@ class Regressor(nn.Module):
 #     g, label = gd[1]
 
 #     from torch.utils.data import DataLoader
-#     n_feat = g.ndata['feat'].shape[1]
 
-#     net = Regressor(n_feat, 128)
+#     n_feat = g.ndata["feat"].shape[1]
+
+#     net = GAT(
+#         num_layers=6,
+#         in_dim=n_feat,
+#         num_hidden=128,
+#         num_classes=1,
+#         heads=([12] * 6) + [32],
+#         activation=F.elu,
+#         residual=True,
+#     )
 #     out = net(g)
 #     out.backward()
-    
-#     print(g.ndata['feat'].grad)
+
+#     print(g.ndata["feat"].grad)

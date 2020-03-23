@@ -10,12 +10,19 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from molexplain.net import Regressor
+from molexplain.net import GAT
 from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import PROCESSED_DATA_PATH
 
-BATCH_SIZE = 128
+NUM_LAYERS = 6
+NUM_HEADS = 12
+NUM_HIDDEN = 128
+NUM_OUTHEADS = 32
+
+BATCH_SIZE = 32
+INITIAL_LR = 1e-5
 N_EPOCHS = 1000
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
@@ -28,12 +35,15 @@ def train_loop(loader, model, loss_fn, opt):
 
     losses = []
 
-    for g, label in progress:
+    for g, label, mask in progress:
         g = g.to(DEVICE)
-        label = label.unsqueeze(1).to(DEVICE)
+        label = label.to(DEVICE)
+        mask = mask.to(DEVICE)
+        label = label[mask]
 
         opt.zero_grad()
         out = model(g)
+        out = out[mask]
         loss = loss_fn(label, out)
         loss.backward()
         opt.step()
@@ -50,29 +60,50 @@ def eval_loop(loader, model, progress=True):
 
     ys = []
     yhats = []
+    masks = []
 
-    for g, label in loader:
+    for g, label, mask in loader:
         with torch.no_grad():
             g = g.to(DEVICE)
             out = model(g)
-            ys.append(label.unsqueeze(1).cpu())
+            ys.append(label.cpu())
             yhats.append(out.cpu())
-    return torch.cat(ys), torch.cat(yhats)
+            masks.append(mask)
+    return torch.cat(ys), torch.cat(yhats), torch.cat(masks)
 
 
-def metrics(ys, yhats):
-    r = np.corrcoef((ys.squeeze().numpy(), yhats.squeeze().numpy()))[0, 1]
-    rmse_ = rmse(ys.squeeze().numpy(), yhats.squeeze().numpy())
-    return r, rmse_
+def metrics(ys, yhats, masks):
+    n_tasks = ys.shape[1]
+    rs = []
+    rmses = []
+
+    for task_no in range(n_tasks):
+        y, yhat = (
+            ys[masks[:, task_no], task_no].numpy(),
+            yhats[masks[:, task_no], task_no].numpy(),
+        )
+        rs.append(np.corrcoef((y, yhat))[0, 1])
+        rmses.append(rmse(y, yhat))
+    return rs, rmses
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, "CHEMBL3301372.csv"), header=0)
-    # df['st_value'] = -np.log10(1e-9 *  df['st_value'])
-    df_train, df_test = train_test_split(df, test_size=.2, random_state=1337)
+    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+    values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
+    mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
-    data_train = GraphData(df_train.inchi.to_list(), df_train.st_value.to_list())
-    data_test = GraphData(df_test.inchi.to_list(), df_test.st_value.to_list())
+    idx_train, idx_test = train_test_split(
+        np.arange(len(inchis)), test_size=0.2, random_state=1337
+    )
+
+    inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
+    values_train, values_test = values[idx_train, :], values[idx_test, :]
+    mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
+
+    data_train = GraphData(inchis_train, values_train, mask_train)
+    data_test = GraphData(inchis_test, values_test, mask_test)
+
+    in_dim = data_train[0][0].ndata['feat'].shape[1]
 
     loader_train = DataLoader(
         data_train,
@@ -90,8 +121,17 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    model = Regressor(in_dim=42).to(DEVICE)
-    opt = Adam(model.parameters())
+    model = GAT(
+        num_layers=NUM_LAYERS,
+        in_dim=in_dim,
+        num_hidden=NUM_HIDDEN,
+        num_classes=values.shape[1],
+        heads=([NUM_HEADS] * NUM_LAYERS) + [NUM_OUTHEADS],
+        activation=F.relu,
+        residual=True,
+    ).to(DEVICE)
+
+    opt = Adam(model.parameters(), lr=INITIAL_LR)
 
     train_losses = []
 
@@ -100,6 +140,11 @@ if __name__ == "__main__":
         t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-        y_test, yhat_test = eval_loop(loader_test, model, progress=False)
-        r, rmse_ = metrics(y_test, yhat_test)
-        print('Test R: {:.2f}, RMSE: {:.2f}'.format(r, rmse_))
+        y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
+        r, rmse_ = metrics(y_test, yhat_test, mask_test)
+        print(
+            "Test R:[{}], RMSE: [{}]".format(
+                "\t".join("{:.3f}".format(x) for x in r),
+                "\t".join("{:.3f}".format(x) for x in rmse_),
+            )
+        )
