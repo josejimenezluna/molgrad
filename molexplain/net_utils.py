@@ -1,14 +1,14 @@
 import os
+
+import dgl
 import numpy as np
 import pandas as pd
 import rdkit
 import torch
+from rdkit.Chem import GetPeriodicTable
 from rdkit.Chem.inchi import MolFromInchi
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
-from rdkit.Chem import GetPeriodicTable
 from torch.utils.data import Dataset
-
-import dgl
 
 ATOM_TYPES = [
     "Ag",

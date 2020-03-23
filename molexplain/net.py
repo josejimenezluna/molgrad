@@ -55,33 +55,43 @@ class GAT(nn.Module):
             h = self.gat_layers[l](g, h).flatten(1)
         # output projection
         g.ndata['h'] = self.gat_layers[-1](g, h)
-        latent = dgl.sum_nodes(g, 'h').mean(axis=2)
+        latent = dgl.sum_nodes(g, 'h').mean(axis=-1)
+        if len(latent.shape) == 1:  ## Need a better solution
+            latent = latent.unsqueeze(0)
         return self.linear(latent)
 
 
-# if __name__ == "__main__":
-#     from molexplain.net_utils import GraphData, collate_pair
+if __name__ == "__main__":
+    import os
+    import numpy as np
+    from molexplain.net_utils import GraphData, collate_pair
+    from molexplain.utils import PROCESSED_DATA_PATH
+    from torch.utils.data import DataLoader
 
-#     inchis = ["InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"] * 128
-#     labels = [1] * 128
 
-#     gd = GraphData(inchis, labels, requires_input_grad=True)
-#     g, label = gd[1]
+    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+    values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
+    mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
-#     from torch.utils.data import DataLoader
+    gd = GraphData(inchis, values, mask, requires_input_grad=True)
+    g, _, _ = gd[1]
+    n_feat = g.ndata["feat"].shape[1]
 
-#     n_feat = g.ndata["feat"].shape[1]
+    loader = DataLoader(gd, batch_size=1, collate_fn=collate_pair)
 
-#     net = GAT(
-#         num_layers=6,
-#         in_dim=n_feat,
-#         num_hidden=128,
-#         num_classes=1,
-#         heads=([12] * 6) + [32],
-#         activation=F.elu,
-#         residual=True,
-#     )
-#     out = net(g)
-#     out.backward()
+    net = GAT(
+        num_layers=6,
+        in_dim=n_feat,
+        num_hidden=128,
+        num_classes=5,
+        heads=([12] * 6) + [32],
+        activation=F.relu,
+        residual=True,
+    )
 
-#     print(g.ndata["feat"].grad)
+    # g, _, _ = next(iter(loader))
+
+    out = net(g)
+    out[0, 0].backward(retain_graph=True)
+
+    print(g.ndata["feat"].grad)
