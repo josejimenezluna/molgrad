@@ -30,9 +30,9 @@ def integrated_gradients(graph, model, task, n_steps=50):
         # g = g.to(DEVICE)
         preds = model(g)
         preds[0][task].backward(retain_graph=True)
-        atom_grads = g.ndata["feat"].grad
+        atom_grads = g.ndata["feat"].grad.unsqueeze(2)
         values_steps.append(atom_grads)
-    return torch.cat(values_steps)
+    return torch.cat(values_steps, dim=2).mean(dim=(1, 2))
 
 
 if __name__ == "__main__":
@@ -44,13 +44,5 @@ if __name__ == "__main__":
 
     data = GraphData(inchis, values, mask, requires_input_grad=True)
     graph, _, _ = data[0]
-
-    preds = model(graph)
-    preds[0][0].backward(retain_graph=True)
-    print(graph.ndata["feat"].grad)
-
-    graphs = gen_steps(graph, 50)
-    g = graphs[-1]
-    preds = model(g)
-    preds[0][0].backward(retain_graph=True)
-    print(g.ndata["feat"].grad)
+    ig = integrated_gradients(graph, model, 0, 50)
+    atom_importance = ig.mean(dim=(1, 2))

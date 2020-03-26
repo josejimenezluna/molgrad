@@ -56,7 +56,7 @@ class GAT(nn.Module):
         # output projection
         g.ndata['h'] = self.gat_layers[-1](g, h)
         latent = dgl.sum_nodes(g, 'h').mean(axis=-1)
-        if len(latent.shape) == 1:  ## Need a better solution
+        if len(latent.shape) == 1:  ## TODO: Need a better solution
             latent = latent.unsqueeze(0)
         return self.linear(latent)
 
