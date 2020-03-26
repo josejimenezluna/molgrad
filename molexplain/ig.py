@@ -12,7 +12,7 @@ from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 def gen_steps(graph, n_steps):
     graphs = []
-    feat = graph.ndata["feat"].detach()
+    feat = graph.ndata["feat"].detach().to(DEVICE)
 
     for step in range(n_steps + 1):
         g = deepcopy(graph)
@@ -27,7 +27,7 @@ def integrated_gradients(graph, model, task, n_steps=50):
     values_steps = []
 
     for g in graphs:
-        # g = g.to(DEVICE)
+        g = g.to(DEVICE)
         preds = model(g)
         preds[0][task].backward(retain_graph=True)
         atom_grads = g.ndata["feat"].grad.unsqueeze(2)
@@ -36,7 +36,7 @@ def integrated_gradients(graph, model, task, n_steps=50):
 
 
 if __name__ == "__main__":
-    model = torch.load(os.path.join(MODELS_PATH, "AZ_ChEMBL.pt")).cpu()
+    model = torch.load(os.path.join(MODELS_PATH, "AZ_ChEMBL.pt"))
 
     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
     values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
@@ -44,5 +44,5 @@ if __name__ == "__main__":
 
     data = GraphData(inchis, values, mask, requires_input_grad=True)
     graph, _, _ = data[0]
-    ig = integrated_gradients(graph, model, 0, 50)
+    ig = integrated_gradients(graph, model, 0, 50).cpu()
     atom_importance = ig.mean(dim=(1, 2))
