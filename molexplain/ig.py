@@ -32,7 +32,7 @@ def integrated_gradients(graph, model, task, n_steps=50):
         preds[0][task].backward(retain_graph=True)
         atom_grads = g.ndata["feat"].grad.unsqueeze(2)
         values_steps.append(atom_grads)
-    return torch.cat(values_steps, dim=2).mean(dim=(1, 2))
+    return torch.cat(values_steps, dim=2)
 
 
 if __name__ == "__main__":
