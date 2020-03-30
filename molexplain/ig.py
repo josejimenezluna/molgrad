@@ -11,6 +11,10 @@ from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 
 def gen_steps(graph, n_steps):
+    """
+    Generates straight path between the node features of `graph`
+    using a Monte Carlo approx. of `n_steps`.
+    """
     graphs = []
     feat = graph.ndata["feat"].detach().to(DEVICE)
 
@@ -23,6 +27,10 @@ def gen_steps(graph, n_steps):
 
 
 def integrated_gradients(graph, model, task, n_steps=50):
+    """
+    Computes path integral of the node features of `graph` for a
+    specific `task` number, using a Monte Carlo approx. of `n_steps`. 
+    """
     graphs = gen_steps(graph, n_steps=n_steps)
     values_steps = []
 
@@ -44,5 +52,5 @@ if __name__ == "__main__":
 
     data = GraphData(inchis, values, mask, requires_input_grad=True)
     graph, _, _ = data[0]
-    ig = integrated_gradients(graph, model, 0, 50).cpu()
+    ig = integrated_gradients(graph, model, task=0, n_steps=50).cpu()
     atom_importance = ig.mean(dim=(1, 2))
