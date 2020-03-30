@@ -57,6 +57,9 @@ HYBRIDIZATION = [
 
 
 def mol_to_dgl(mol, requires_input_grad=False):
+    """
+    Converts mol to featurized DGL graph.
+    """
     g = dgl.DGLGraph()
     g.add_nodes(mol.GetNumAtoms())
     g.set_n_initializer(dgl.init.zero_initializer)
@@ -143,43 +146,3 @@ def collate_pair(samples):
     graphs_i, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
     return batched_graph_i, torch.Tensor(labels), torch.BoolTensor(masks)
-
-
-# if __name__ == "__main__":
-#     from molexplain.utils import PROCESSED_DATA_PATH
-
-#     chembl_ids = [
-#         "CHEMBL3301365.csv",
-#         "CHEMBL3301366.csv",
-#         "CHEMBL3301370.csv",
-#         "CHEMBL3301371.csv",
-#         "CHEMBL3301372.csv",
-#     ]
-
-#     dfs = []
-#     for chembl_id in chembl_ids:
-#         df = pd.read_csv(os.path.join(PROCESSED_DATA_PATH, chembl_id))
-#         dfs.append(df)
-
-#     needed_cols = ["inchi", "st_value"]
-#     merged = dfs[0][needed_cols]
-#     for df in dfs[1:]:
-#         merged = pd.merge(merged, df[needed_cols], how="outer", on="inchi")
-    
-#     inchis = merged.inchi.tolist()
-#     values = merged[['st_value_x', 'st_value_y', 'st_value']].values
-#     mask = np.logical_not(np.isnan(values))
-
-#     np.save(os.path.join(PROCESSED_DATA_PATH, 'inchis.npy'), arr=inchis)
-#     np.save(os.path.join(PROCESSED_DATA_PATH, 'values.npy'), arr=values)
-#     np.save(os.path.join(PROCESSED_DATA_PATH, 'mask.npy'), arr=mask)
-
-#     gd = GraphData(merged.inchi.tolist(), values, mask)
-
-#     g_i, label, m = gd[1]
-
-#     from torch.utils.data import DataLoader
-
-#     data_loader = DataLoader(gd, batch_size=32, shuffle=True, collate_fn=collate_pair)
-
-#     b_i, labels, ms = next(iter(data_loader))
