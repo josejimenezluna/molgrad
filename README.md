@@ -1,5 +1,13 @@
 # molexplain
 
+Install conda environment (assumes CUDA10.1 compatible driver is available):
+
+```bash
+conda env create -f environment.yml
+```
+
+
+
 Download AZ ChEMBL models:
 
 ``` bash

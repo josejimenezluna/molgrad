@@ -30,6 +30,10 @@ rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
 
 def train_loop(loader, model, loss_fn, opt):
+    """
+    Runs an entire training epoch for `model` using the data stored in `loader`,
+    the loss function `loss_fn` and optimizer `opt`.
+    """
     model = model.train()
     progress = tqdm(loader)
 
@@ -54,6 +58,9 @@ def train_loop(loader, model, loss_fn, opt):
 
 
 def eval_loop(loader, model, progress=True):
+    """
+    Computes prediction for all the data stored in `loader` for `model`. 
+    """
     model = model.eval()
     if progress:
         loader = tqdm(loader)
@@ -73,6 +80,10 @@ def eval_loop(loader, model, progress=True):
 
 
 def metrics(ys, yhats, masks):
+    """
+    Computes correlation coefficient and RMSE between target `ys` and
+    predicted `yhats` values, taking into account missing values specified by `masks`.
+    """
     n_tasks = ys.shape[1]
     rs = []
     rmses = []
@@ -103,7 +114,7 @@ if __name__ == "__main__":
     data_train = GraphData(inchis_train, values_train, mask_train)
     data_test = GraphData(inchis_test, values_test, mask_test)
 
-    in_dim = data_train[0][0].ndata['feat'].shape[1]
+    in_dim = data_train[0][0].ndata["feat"].shape[1]
 
     loader_train = DataLoader(
         data_train,
@@ -150,4 +161,4 @@ if __name__ == "__main__":
         )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model, os.path.join(MODELS_PATH, 'AZ_ChEMBL.pt'))
+    torch.save(model, os.path.join(MODELS_PATH, "AZ_ChEMBL.pt"))
