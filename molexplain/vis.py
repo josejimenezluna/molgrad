@@ -42,7 +42,9 @@ def determine_bond_col(atom_col, mol):
     return bond_col
 
 
-def molecule_importance(mol, model, task=0, n_steps=50, vis_factor=10):
+def molecule_importance(
+    mol, model, task=0, n_steps=50, vis_factor=10, img_width=400, img_height=200
+):
     """
     Colors molecule according to the integrated gradients method for
     a particular `task`, using a Monte Carlo approximation with `n_steps`.
@@ -64,7 +66,7 @@ def molecule_importance(mol, model, task=0, n_steps=50, vis_factor=10):
     }
 
     rdDepictor.Compute2DCoords(mol)
-    drawer = rdMolDraw2D.MolDraw2DSVG(400, 200)
+    drawer = rdMolDraw2D.MolDraw2DSVG(img_width, img_height)
     drawer.DrawMolecule(
         mol,
         highlightAtoms=highlightAtoms,
