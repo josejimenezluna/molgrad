@@ -43,7 +43,14 @@ def determine_bond_col(atom_col, mol):
 
 
 def molecule_importance(
-    mol, model, task=0, n_steps=50, vis_factor=10, img_width=400, img_height=200
+    mol,
+    model,
+    task=0,
+    n_steps=50,
+    eps=1e-5,
+    vis_factor=10,
+    img_width=400,
+    img_height=200,
 ):
     """
     Colors molecule according to the integrated gradients method for
@@ -55,7 +62,7 @@ def molecule_importance(
     ig = integrated_gradients(graph, model, task=task, n_steps=n_steps).cpu()
     atom_importance = ig.mean(dim=(1, 2)).numpy()
 
-    highlightAtomColors = determine_atom_col(atom_importance)
+    highlightAtomColors = determine_atom_col(atom_importance, eps=eps)
     highlightAtoms = list(highlightAtomColors.keys())
 
     highlightBondColors = determine_bond_col(highlightAtomColors, mol)
