@@ -21,7 +21,7 @@ NUM_OUTHEADS = 32
 
 BATCH_SIZE = 32
 INITIAL_LR = 1e-5
-N_EPOCHS = 500
+N_EPOCHS = 20
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
@@ -161,4 +161,4 @@ if __name__ == "__main__":
         )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model, os.path.join(MODELS_PATH, "AZ_ChEMBL.pt"))
+    # torch.save(model, os.path.join(MODELS_PATH, "AZ_ChEMBL.pt"))
