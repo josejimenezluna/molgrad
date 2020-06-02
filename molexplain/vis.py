@@ -3,9 +3,10 @@ from IPython.display import SVG
 from rdkit import Chem
 from rdkit.Chem import MolFromInchi, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem.rdmolops import AddHs
 
 from molexplain.ig import integrated_gradients
-from molexplain.net_utils import mol_to_dgl, get_global_features
+from molexplain.net_utils import get_global_features, mol_to_dgl
 
 GREEN_COL = (0, 1, 0)
 RED_COL = (1, 0, 0)
@@ -51,6 +52,7 @@ def molecule_importance(
     vis_factor=10,
     img_width=400,
     img_height=200,
+    addHs=True,
 ):
     """
     Colors molecule according to the integrated gradients method for
@@ -58,6 +60,8 @@ def molecule_importance(
     Uses a `vis_factor` multiplicative parameter for clearer visualization
     purposes.
     """
+    if addHs:
+        mol = AddHs(mol)
     graph = mol_to_dgl(mol)
     g_feat = get_global_features(mol)
     atom_importance, global_importance = integrated_gradients(graph, g_feat,model, task=task, n_steps=n_steps)
@@ -84,4 +88,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return SVG(svg), global_importance
+    return SVG(svg), atom_importance, global_importance

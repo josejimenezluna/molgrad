@@ -11,6 +11,7 @@ from rdkit.Chem.Descriptors import MolWt
 from rdkit.Chem.inchi import MolFromInchi
 from rdkit.Chem.Lipinski import NumHDonors
 from rdkit.Chem.rdMolDescriptors import CalcTPSA
+from rdkit.Chem.rdmolops import AddHs
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from torch.utils.data import Dataset
 
@@ -88,6 +89,7 @@ def mol_to_dgl(mol):
         hybrid = [0] * len(HYBRIDIZATION)
         hybrid[HYBRIDIZATION.index(atom.GetHybridization())] = 1
 
+        degree = atom.GetDegree()
         valence = atom.GetImplicitValence()
         aromatic = int(atom.GetIsAromatic())
         ex_hs = atom.GetNumExplicitHs()
@@ -104,6 +106,7 @@ def mol_to_dgl(mol):
         atom_feat.append(ex_valence)
         atom_feat.append(charge)
         atom_feat.extend(hybrid)
+        atom_feat.append(degree)
         atom_feat.append(valence)
         atom_feat.append(aromatic)
         atom_feat.append(ex_hs)
@@ -143,6 +146,7 @@ class GraphData(Dataset):
 
     def __getitem__(self, idx):
         mol = MolFromInchi(self.inchi[idx])
+        mol = AddHs(mol)
         return (
             mol_to_dgl(mol),
             get_global_features(mol),
@@ -165,9 +169,11 @@ def collate_pair(samples):
     )
 
 
-# if __name__ == "__main__":
-#     from molexplain.utils import PROCESSED_DATA_PATH
+if __name__ == "__main__":
+    from molexplain.utils import PROCESSED_DATA_PATH
 
-#     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
-#     mol = MolFromInchi(inchis[243])
-#     g_feat = get_global_features(mol)
+    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+    mol = MolFromInchi(inchis[243], sanitize=False, removeHs=False)
+
+    from rdkit.Chem.rdmolops import AddHs
+    g_feat = get_global_features(mol)
