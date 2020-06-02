@@ -14,13 +14,30 @@ class GAT(nn.Module):
     """
 
     def __init__(
-        self, num_layers, in_dim, num_hidden, num_classes, heads, activation, residual
+        self,
+        num_layers,
+        in_dim,
+        n_global,
+        num_hidden,
+        global_hidden,
+        num_classes,
+        heads,
+        activation,
+        residual,
     ):
         super(GAT, self).__init__()
         self.num_layers = num_layers
         self.gat_layers = nn.ModuleList()
         self.activation = activation
-        self.linear = nn.Linear(heads[-1], num_classes)
+
+        self.global_subnet = nn.Sequential(
+            nn.Linear(n_global, global_hidden),
+            nn.ReLU(),
+            nn.Linear(global_hidden, global_hidden),
+            nn.ReLU(),
+        )
+
+        self.linear = nn.Linear(heads[-1] + global_hidden, num_classes)
         # input projection (no residual)
         self.gat_layers.append(
             GATConv(
@@ -54,7 +71,7 @@ class GAT(nn.Module):
             )
         )
 
-    def forward(self, g):
+    def forward(self, g, g_feat):
         h = g.ndata["feat"]
         for l in range(self.num_layers):
             h = self.gat_layers[l](g, h).flatten(1)
@@ -63,4 +80,7 @@ class GAT(nn.Module):
         latent = dgl.sum_nodes(g, "h").mean(axis=-1)
         if len(latent.shape) == 1:  ## TODO: Need a better solution
             latent = latent.unsqueeze(0)
-        return self.linear(latent)
+
+        latent_global = self.global_subnet(g_feat)
+        cat = torch.cat([latent, latent_global], dim=1)
+        return self.linear(cat)

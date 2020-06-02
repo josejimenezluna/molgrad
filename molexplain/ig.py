@@ -10,47 +10,64 @@ from molexplain.train import DEVICE
 from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 
-def gen_steps(graph, n_steps):
+def gen_steps(graph, g_feat, n_steps):
     """
     Generates straight path between the node features of `graph`
     using a Monte Carlo approx. of `n_steps`.
     """
     graphs = []
-    feat = graph.ndata["feat"].detach().to(DEVICE)
+    g_feats = []
+
+    feat = graph.ndata["feat"]
+    g_feat = torch.as_tensor(g_feat)
 
     for step in range(n_steps + 1):
+        factor = step / n_steps
         g = deepcopy(graph)
-        g.ndata["feat"] = step / n_steps * feat
-        g.ndata["feat"].requires_grad = True
+        g.ndata["feat"] = factor * feat
+        g_feat_step = (factor * g_feat).unsqueeze(0)
         graphs.append(g)
-    return graphs
+        g_feats.append(g_feat_step)
+    return graphs, g_feats
 
 
-def integrated_gradients(graph, model, task, n_steps=50):
+def integrated_gradients(graph, g_feat, model, task, n_steps=50):
     """
     Computes path integral of the node features of `graph` for a
     specific `task` number, using a Monte Carlo approx. of `n_steps`. 
     """
-    graphs = gen_steps(graph, n_steps=n_steps)
-    values_steps = []
+    graphs, g_feats = gen_steps(graph, g_feat, n_steps=n_steps)
+    values_graph = []
+    values_global = []
 
-    for g in graphs:
+    for g, gf in zip(graphs, g_feats):
         g = g.to(DEVICE)
-        preds = model(g)
-        preds[0][task].backward(retain_graph=True)
+        gf = gf.to(DEVICE)
+        g.ndata["feat"].requires_grad_()
+        gf.requires_grad_()
+
+        preds = model(g, gf)
+        preds[0][task].backward()
         atom_grads = g.ndata["feat"].grad.unsqueeze(2)
-        values_steps.append(atom_grads)
-    return torch.cat(values_steps, dim=2)
+        values_graph.append(atom_grads)
+        values_global.append(gf.grad)
+    return (
+        torch.cat(values_graph, dim=2).mean(dim=(1, 2)).cpu().numpy(),
+        torch.cat(values_global).mean(axis=0).cpu().numpy(),
+    )
 
 
 if __name__ == "__main__":
-    model = torch.load(os.path.join(MODELS_PATH, "AZ_ChEMBL.pt"))
+    model = torch.load(
+        os.path.join(MODELS_PATH, "AZ_ChEMBL_global.pt"), map_location=DEVICE
+    )
 
     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
     values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
     mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
-    data = GraphData(inchis, values, mask, requires_input_grad=True)
-    graph, _, _ = data[0]
-    ig = integrated_gradients(graph, model, task=0, n_steps=50).cpu()
-    atom_importance = ig.mean(dim=(1, 2))
+    data = GraphData(inchis, values, mask)
+    graph, g_feat, _, _ = data[0]
+    atom_importance, global_importance = integrated_gradients(
+        graph, g_feat, model, task=0, n_steps=50
+    )

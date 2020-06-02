@@ -6,7 +6,11 @@ import pandas as pd
 import rdkit
 import torch
 from rdkit.Chem import GetPeriodicTable
+from rdkit.Chem.Crippen import MolLogP
+from rdkit.Chem.Descriptors import MolWt
 from rdkit.Chem.inchi import MolFromInchi
+from rdkit.Chem.Lipinski import NumHDonors
+from rdkit.Chem.rdMolDescriptors import CalcTPSA
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from torch.utils.data import Dataset
 
@@ -56,7 +60,7 @@ HYBRIDIZATION = [
 ]
 
 
-def mol_to_dgl(mol, requires_input_grad=False):
+def mol_to_dgl(mol):
     """
     Converts mol to featurized DGL graph.
     """
@@ -115,25 +119,33 @@ def mol_to_dgl(mol, requires_input_grad=False):
         g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
 
     g.ndata["feat"] = torch.FloatTensor(features)
-    g.ndata["feat"].requires_grad = requires_input_grad
     return g
 
 
+def get_global_features(mol):
+    # MW, TPSA, logP, n.hdonors
+    mw = MolWt(mol)
+    tpsa = CalcTPSA(mol)
+    logp = MolLogP(mol)
+    n_hdonors = NumHDonors(mol)
+
+    desc = np.array([mw, tpsa, logp, n_hdonors], dtype=np.float32)
+    return desc
+
+
 class GraphData(Dataset):
-    def __init__(self, inchi, labels, mask, requires_input_grad=False):
+    def __init__(self, inchi, labels, mask):
         self.inchi = inchi
         self.labels = np.array(labels, dtype=np.float32)
         self.mask = np.array(mask, dtype=np.bool)
-        self.requires_input_grad = requires_input_grad
 
         assert len(self.inchi) == len(self.labels)
 
     def __getitem__(self, idx):
+        mol = MolFromInchi(self.inchi[idx])
         return (
-            mol_to_dgl(
-                MolFromInchi(self.inchi[idx]),
-                requires_input_grad=self.requires_input_grad,
-            ),
+            mol_to_dgl(mol),
+            get_global_features(mol),
             self.labels[idx, :],
             self.mask[idx, :],
         )
@@ -143,6 +155,19 @@ class GraphData(Dataset):
 
 
 def collate_pair(samples):
-    graphs_i, labels, masks = map(list, zip(*samples))
+    graphs_i, g_feats, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
-    return batched_graph_i, torch.Tensor(labels), torch.BoolTensor(masks)
+    return (
+        batched_graph_i,
+        torch.as_tensor(g_feats),
+        torch.as_tensor(labels),
+        torch.as_tensor(masks),
+    )
+
+
+# if __name__ == "__main__":
+#     from molexplain.utils import PROCESSED_DATA_PATH
+
+#     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
+#     mol = MolFromInchi(inchis[243])
+#     g_feat = get_global_features(mol)

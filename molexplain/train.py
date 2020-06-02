@@ -17,10 +17,11 @@ from molexplain.utils import PROCESSED_DATA_PATH, MODELS_PATH
 NUM_LAYERS = 6
 NUM_HEADS = 12
 NUM_HIDDEN = 128
+NUM_GLOBAL_HIDDEN = 32
 NUM_OUTHEADS = 32
 
 BATCH_SIZE = 32
-INITIAL_LR = 1e-5
+INITIAL_LR = 1e-4
 N_EPOCHS = 20
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,14 +40,15 @@ def train_loop(loader, model, loss_fn, opt):
 
     losses = []
 
-    for g, label, mask in progress:
+    for g, g_feat, label, mask in progress:
         g = g.to(DEVICE)
+        g_feat = g_feat.to(DEVICE)
         label = label.to(DEVICE)
         mask = mask.to(DEVICE)
         label = label[mask]
 
         opt.zero_grad()
-        out = model(g)
+        out = model(g, g_feat)
         out = out[mask]
         loss = loss_fn(label, out)
         loss.backward()
@@ -69,10 +71,11 @@ def eval_loop(loader, model, progress=True):
     yhats = []
     masks = []
 
-    for g, label, mask in loader:
+    for g, g_feat, label, mask in loader:
         with torch.no_grad():
             g = g.to(DEVICE)
-            out = model(g)
+            g_feat = g_feat.to(DEVICE)
+            out = model(g, g_feat)
             ys.append(label.cpu())
             yhats.append(out.cpu())
             masks.append(mask)
@@ -114,7 +117,9 @@ if __name__ == "__main__":
     data_train = GraphData(inchis_train, values_train, mask_train)
     data_test = GraphData(inchis_test, values_test, mask_test)
 
-    in_dim = data_train[0][0].ndata["feat"].shape[1]
+    sample_item = data_train[0]
+    in_dim = sample_item[0].ndata["feat"].shape[1]
+    n_global = len(sample_item[1])
 
     loader_train = DataLoader(
         data_train,
@@ -135,7 +140,9 @@ if __name__ == "__main__":
     model = GAT(
         num_layers=NUM_LAYERS,
         in_dim=in_dim,
+        n_global=n_global,
         num_hidden=NUM_HIDDEN,
+        global_hidden=NUM_GLOBAL_HIDDEN,
         num_classes=values.shape[1],
         heads=([NUM_HEADS] * NUM_LAYERS) + [NUM_OUTHEADS],
         activation=F.relu,
@@ -161,4 +168,4 @@ if __name__ == "__main__":
         )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    # torch.save(model, os.path.join(MODELS_PATH, "AZ_ChEMBL.pt"))
+    torch.save(model, os.path.join(MODELS_PATH, "AZ_ChEMBL_global.pt"))
