@@ -134,11 +134,10 @@ def get_global_features(mol):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchi, labels, mask, requires_input_grad=False):
+    def __init__(self, inchi, labels, mask):
         self.inchi = inchi
         self.labels = np.array(labels, dtype=np.float32)
         self.mask = np.array(mask, dtype=np.bool)
-        self.requires_input_grad = requires_input_grad
 
         assert len(self.inchi) == len(self.labels)
 
