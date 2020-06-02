@@ -19,5 +19,6 @@ dependencies:
   - tqdm
   - dgl-cuda10.1
   - scikit-learn
+  - jupyter
   - pip:
     - requests==2.23.0

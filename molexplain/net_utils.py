@@ -60,7 +60,7 @@ HYBRIDIZATION = [
 ]
 
 
-def mol_to_dgl(mol, requires_input_grad=False):
+def mol_to_dgl(mol):
     """
     Converts mol to featurized DGL graph.
     """
@@ -119,11 +119,10 @@ def mol_to_dgl(mol, requires_input_grad=False):
         g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
 
     g.ndata["feat"] = torch.FloatTensor(features)
-    g.ndata["feat"].requires_grad = requires_input_grad
     return g
 
 
-def get_global_features(mol, requires_input_grad=False):
+def get_global_features(mol):
     # MW, TPSA, logP, n.hdonors
     mw = MolWt(mol)
     tpsa = CalcTPSA(mol)
@@ -146,8 +145,8 @@ class GraphData(Dataset):
     def __getitem__(self, idx):
         mol = MolFromInchi(self.inchi[idx])
         return (
-            mol_to_dgl(mol, requires_input_grad=self.requires_input_grad),
-            get_global_features(mol, requires_input_grad=self.requires_input_grad),
+            mol_to_dgl(mol),
+            get_global_features(mol),
             self.labels[idx, :],
             self.mask[idx, :],
         )
@@ -156,16 +155,14 @@ class GraphData(Dataset):
         return len(self.inchi)
 
 
-def collate_pair(samples, requires_input_grad=False):
+def collate_pair(samples):
     graphs_i, g_feats, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
-    batch_g_feat = torch.Tensor(g_feats)
-    batch_g_feat.requires_grad = True
     return (
         batched_graph_i,
-        batch_g_feat,
-        torch.Tensor(labels),
-        torch.BoolTensor(masks),
+        torch.as_tensor(g_feats),
+        torch.as_tensor(labels),
+        torch.as_tensor(masks),
     )
 
 

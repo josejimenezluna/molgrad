@@ -5,7 +5,7 @@ from rdkit.Chem import MolFromInchi, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from molexplain.ig import integrated_gradients
-from molexplain.net_utils import mol_to_dgl
+from molexplain.net_utils import mol_to_dgl, get_global_features
 
 GREEN_COL = (0, 1, 0)
 RED_COL = (1, 0, 0)
@@ -58,9 +58,9 @@ def molecule_importance(
     Uses a `vis_factor` multiplicative parameter for clearer visualization
     purposes.
     """
-    graph = mol_to_dgl(mol, requires_input_grad=True)
-    ig = integrated_gradients(graph, model, task=task, n_steps=n_steps).cpu()
-    atom_importance = ig.mean(dim=(1, 2)).numpy()
+    graph = mol_to_dgl(mol)
+    g_feat = get_global_features(mol)
+    atom_importance, global_importance = integrated_gradients(graph, g_feat,model, task=task, n_steps=n_steps)
 
     highlightAtomColors = determine_atom_col(atom_importance, eps=eps)
     highlightAtoms = list(highlightAtomColors.keys())
@@ -84,4 +84,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return SVG(svg)
+    return SVG(svg), global_importance
