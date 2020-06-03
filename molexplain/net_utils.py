@@ -61,6 +61,20 @@ HYBRIDIZATION = [
 ]
 
 
+BOND_TYPES = [
+    rdkit.Chem.rdchem.BondType.SINGLE,
+    rdkit.Chem.rdchem.BondType.DOUBLE,
+    rdkit.Chem.rdchem.BondType.TRIPLE,
+    rdkit.Chem.rdchem.BondType.AROMATIC,
+]
+
+BOND_STEREO = [
+    rdkit.Chem.rdchem.BondStereo.STEREONONE,
+    rdkit.Chem.rdchem.BondStereo.STEREOANY,
+    rdkit.Chem.rdchem.BondStereo.STEREOZ,
+    rdkit.Chem.rdchem.BondStereo.STEREOE
+]
+
 def mol_to_dgl(mol):
     """
     Converts mol to featurized DGL graph.
@@ -70,7 +84,9 @@ def mol_to_dgl(mol):
     g.set_n_initializer(dgl.init.zero_initializer)
     g.set_e_initializer(dgl.init.zero_initializer)
 
-    features = []
+    # Atom features
+
+    atom_features = []
 
     pd = GetPeriodicTable()
     ComputeGasteigerCharges(mol)
@@ -116,12 +132,32 @@ def mol_to_dgl(mol):
         atom_feat.append(mass)
         atom_feat.append(vdw)
         atom_feat.append(pcharge)
-        features.append(atom_feat)
+        atom_features.append(atom_feat)
 
     for bond in mol.GetBonds():
         g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
 
-    g.ndata["feat"] = torch.FloatTensor(features)
+    g.ndata["feat"] = torch.FloatTensor(atom_features)
+
+    # Bond features
+
+    bond_features = []
+    for bond in mol.GetBonds():
+        bond_feat = []
+
+        bond_type = [0] * len(BOND_TYPES)
+        bond_type[BOND_TYPES.index(bond.GetBondType())] = 1
+        
+        bond_stereo = [0] * len(BOND_STEREO)
+        bond_stereo[BOND_STEREO.index(bond.GetStereo())] = 1
+
+        bond_feat.extend(bond_type)
+        bond_feat.extend(bond_stereo)
+        bond_feat.append(float(bond.GetIsConjugated()))
+        bond_feat.append(float(bond.IsInRing()))
+        bond_features.append(bond_feat)
+
+    g.edata['feat'] = torch.FloatTensor(bond_features)
     return g
 
 

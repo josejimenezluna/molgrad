@@ -64,7 +64,8 @@ def molecule_importance(
         mol = AddHs(mol)
     graph = mol_to_dgl(mol)
     g_feat = get_global_features(mol)
-    atom_importance, global_importance = integrated_gradients(graph, g_feat,model, task=task, n_steps=n_steps)
+    # atom_importance, global_importance = integrated_gradients(graph, g_feat, model, task=task, n_steps=n_steps)
+    atom_importance, edge_importance = integrated_gradients(graph, g_feat, model, task=task, n_steps=n_steps)
 
     highlightAtomColors = determine_atom_col(atom_importance, eps=eps)
     highlightAtoms = list(highlightAtomColors.keys())
@@ -88,4 +89,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return SVG(svg), atom_importance, global_importance
+    return SVG(svg), atom_importance, edge_importance
