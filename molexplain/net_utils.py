@@ -72,8 +72,9 @@ BOND_STEREO = [
     rdkit.Chem.rdchem.BondStereo.STEREONONE,
     rdkit.Chem.rdchem.BondStereo.STEREOANY,
     rdkit.Chem.rdchem.BondStereo.STEREOZ,
-    rdkit.Chem.rdchem.BondStereo.STEREOE
+    rdkit.Chem.rdchem.BondStereo.STEREOE,
 ]
+
 
 def mol_to_dgl(mol):
     """
@@ -147,7 +148,7 @@ def mol_to_dgl(mol):
 
         bond_type = [0] * len(BOND_TYPES)
         bond_type[BOND_TYPES.index(bond.GetBondType())] = 1
-        
+
         bond_stereo = [0] * len(BOND_STEREO)
         bond_stereo[BOND_STEREO.index(bond.GetStereo())] = 1
 
@@ -157,11 +158,22 @@ def mol_to_dgl(mol):
         bond_feat.append(float(bond.IsInRing()))
         bond_features.append(bond_feat)
 
-    g.edata['feat'] = torch.FloatTensor(bond_features)
+    g.edata["feat"] = torch.FloatTensor(bond_features)
     return g
 
 
 def get_global_features(mol):
+    """Computes global-level features for a molecule.
+
+    Parameters
+    ----------
+    mol : rdkit mol
+
+    Returns
+    -------
+    [np.ndarray]
+        Global-level features
+    """
     # MW, TPSA, logP, n.hdonors
     mw = MolWt(mol)
     tpsa = CalcTPSA(mol)
@@ -203,13 +215,3 @@ def collate_pair(samples):
         torch.as_tensor(labels),
         torch.as_tensor(masks),
     )
-
-
-if __name__ == "__main__":
-    from molexplain.utils import PROCESSED_DATA_PATH
-
-    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
-    mol = MolFromInchi(inchis[243], sanitize=False, removeHs=False)
-
-    from rdkit.Chem.rdmolops import AddHs
-    g_feat = get_global_features(mol)

@@ -58,21 +58,20 @@ def integrated_gradients(graph, g_feat, model, task, n_steps=50):
         values_global.append(gf.grad)
     return (
         torch.cat(values_atom, dim=2).mean(dim=(1, 2)).cpu().numpy(),
-        torch.cat(values_edge, dim=2).mean(dim=(1, 2)).cpu().numpy()
-        torch.cat(values_global).mean(axis=0).cpu().numpy(),
+        torch.cat(values_edge, dim=2).mean(dim=(1, 2)).cpu().numpy(),
+        torch.cat(values_global).mean(axis=0).cpu().numpy()
     )
 
 
 if __name__ == "__main__":
     from molexplain.net import MPNNPredictor
 
-
     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
     values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
     mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
     model = MPNNPredictor(
-        node_in_feats=46, edge_in_feats=4, n_tasks=values.shape[1]
+        node_in_feats=46, edge_in_feats=10, global_feats=4, n_tasks=values.shape[1]
     ).to(DEVICE)
 
     model.load_state_dict(torch.load(os.path.join(MODELS_PATH, 'AZ_ChEMBL_MPNN.pt')))

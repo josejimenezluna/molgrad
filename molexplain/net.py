@@ -18,10 +18,14 @@ class MPNNPredictor(nn.Module):
         Size for the input node features.
     edge_in_feats : int
         Size for the input edge features.
+    global_feats : int
+        Size for the input global features
     node_out_feats : int
         Size for the output node representations. Default to 64.
     edge_hidden_feats : int
         Size for the hidden edge representations. Default to 128.
+    global_hidden_feats : int
+        Size for the hidden global representations. Default to 32.
     n_tasks : int
         Number of tasks, which is also the output size. Default to 1.
     num_step_message_passing : int
@@ -39,7 +43,7 @@ class MPNNPredictor(nn.Module):
         global_feats,
         node_out_feats=64,
         edge_hidden_feats=128,
-        global_hidden=32,
+        global_hidden_feats=32,
         n_tasks=1,
         num_step_message_passing=6,
         num_step_set2set=6,
@@ -61,14 +65,14 @@ class MPNNPredictor(nn.Module):
         )
 
         self.global_subnet = nn.Sequential(
-            nn.Linear(global_feats, global_hidden),
+            nn.Linear(global_feats, global_hidden_feats),
             nn.ReLU(),
-            nn.Linear(global_hidden, global_hidden),
+            nn.Linear(global_hidden_feats, global_hidden_feats),
             nn.ReLU(),
         )
 
         self.predict = nn.Sequential(
-            nn.Linear(2 * node_out_feats + global_hidden, node_out_feats),
+            nn.Linear(2 * node_out_feats + global_hidden_feats, node_out_feats),
             nn.ReLU(),
             nn.Linear(node_out_feats, n_tasks),
         )
