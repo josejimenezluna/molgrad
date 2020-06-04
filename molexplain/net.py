@@ -117,8 +117,10 @@ class MPNNPredictor(nn.Module):
     def __init__(self,
                  node_in_feats,
                  edge_in_feats,
+                 global_feats,
                  node_out_feats=64,
                  edge_hidden_feats=128,
+                 global_hidden=32,
                  n_tasks=1,
                  num_step_message_passing=6,
                  num_step_set2set=6,
@@ -133,13 +135,21 @@ class MPNNPredictor(nn.Module):
         self.readout = Set2Set(input_dim=node_out_feats,
                                n_iters=num_step_set2set,
                                n_layers=num_layer_set2set)
+
+        self.global_subnet = nn.Sequential(
+            nn.Linear(global_feats, global_hidden),
+            nn.ReLU(),
+            nn.Linear(global_hidden, global_hidden),
+            nn.ReLU(),
+        )
+
         self.predict = nn.Sequential(
-            nn.Linear(2 * node_out_feats, node_out_feats),
+            nn.Linear(2 * node_out_feats + global_hidden, node_out_feats),
             nn.ReLU(),
             nn.Linear(node_out_feats, n_tasks)
         )
 
-    def forward(self, g):
+    def forward(self, g, g_feat):
         """Graph-level regression/soft classification.
 
         Parameters
@@ -154,4 +164,6 @@ class MPNNPredictor(nn.Module):
         """
         node_feats = self.gnn(g, g.ndata['feat'], g.edata['feat'])
         graph_feats = self.readout(g, node_feats)
-        return self.predict(graph_feats)
+        global_feats = self.global_subnet(g_feat)
+        cat = torch.cat([graph_feats, global_feats], dim=1)
+        return self.predict(cat)

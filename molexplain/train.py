@@ -10,19 +10,15 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from molexplain.net import GAT, MPNNPredictor
+from molexplain.net import MPNNPredictor
 from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import PROCESSED_DATA_PATH, MODELS_PATH
 
-NUM_LAYERS = 6
-NUM_HEADS = 12
-NUM_HIDDEN = 128
-NUM_GLOBAL_HIDDEN = 32
-NUM_OUTHEADS = 32
+N_MESSPASS = 12
 
 BATCH_SIZE = 32
-INITIAL_LR = 1e-3
-N_EPOCHS = 200
+INITIAL_LR = 1e-4
+N_EPOCHS = 1000
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
@@ -48,8 +44,7 @@ def train_loop(loader, model, loss_fn, opt):
         label = label[mask]
 
         opt.zero_grad()
-        # out = model(g, g_feat)
-        out = model(g)
+        out = model(g, g_feat)
 
         out = out[mask]
         loss = loss_fn(label, out)
@@ -77,8 +72,7 @@ def eval_loop(loader, model, progress=True):
         with torch.no_grad():
             g = g.to(DEVICE)
             g_feat = g_feat.to(DEVICE)
-            # out = model(g, g_feat)
-            out = model(g)
+            out = model(g, g_feat)
             ys.append(label.cpu())
             yhats.append(out.cpu())
             masks.append(mask)
@@ -123,8 +117,7 @@ if __name__ == "__main__":
     sample_item = data_train[0]
     a_dim = sample_item[0].ndata["feat"].shape[1]
     e_dim = sample_item[0].edata["feat"].shape[1]
-
-    n_global = len(sample_item[1])
+    g_dim = len(sample_item[1])
 
     loader_train = DataLoader(
         data_train,
@@ -142,20 +135,12 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    # model = GAT(
-    #     num_layers=NUM_LAYERS,
-    #     in_dim=in_dim,
-    #     n_global=n_global,
-    #     num_hidden=NUM_HIDDEN,
-    #     global_hidden=NUM_GLOBAL_HIDDEN,
-    #     num_classes=values.shape[1],
-    #     heads=([NUM_HEADS] * NUM_LAYERS) + [NUM_OUTHEADS],
-    #     activation=F.relu,
-    #     residual=True,
-    # ).to(DEVICE)
-
     model = MPNNPredictor(
-        node_in_feats=a_dim, edge_in_feats=e_dim, n_tasks=values.shape[1]
+        node_in_feats=a_dim,
+        edge_in_feats=e_dim,
+        global_feats=g_dim,
+        n_tasks=values.shape[1],
+        num_step_message_passing=N_MESSPASS,
     ).to(DEVICE)
 
     opt = Adam(model.parameters(), lr=INITIAL_LR)

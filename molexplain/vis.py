@@ -32,6 +32,7 @@ def determine_bond_col(atom_col, mol):
     """
     Colors bonds depending on whether the atoms involved
     share the same color.
+    #TODO: redo this section based on edge importance
     """
     bond_col = {}
 
@@ -48,7 +49,7 @@ def molecule_importance(
     model,
     task=0,
     n_steps=50,
-    eps=1e-5,
+    eps=1e-4,
     vis_factor=10,
     img_width=400,
     img_height=200,
@@ -64,8 +65,9 @@ def molecule_importance(
         mol = AddHs(mol)
     graph = mol_to_dgl(mol)
     g_feat = get_global_features(mol)
-    # atom_importance, global_importance = integrated_gradients(graph, g_feat, model, task=task, n_steps=n_steps)
-    atom_importance, edge_importance = integrated_gradients(graph, g_feat, model, task=task, n_steps=n_steps)
+    atom_importance, edge_importance, global_importance = integrated_gradients(
+        graph, g_feat, model, task=task, n_steps=n_steps
+    )
 
     highlightAtomColors = determine_atom_col(atom_importance, eps=eps)
     highlightAtoms = list(highlightAtomColors.keys())
@@ -89,4 +91,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return SVG(svg), atom_importance, edge_importance
+    return SVG(svg), atom_importance, edge_importance, global_importance
