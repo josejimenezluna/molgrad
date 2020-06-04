@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from molexplain.net import MPNNPredictor
 from molexplain.net_utils import GraphData, collate_pair
-from molexplain.utils import PROCESSED_DATA_PATH, MODELS_PATH
+from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 N_MESSPASS = 12
 
