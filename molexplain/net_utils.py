@@ -77,8 +77,15 @@ BOND_STEREO = [
 
 
 def mol_to_dgl(mol):
-    """
-    Converts mol to featurized DGL graph.
+    """Featurizes an rdkit mol object to a DGL Graph, with node and edge features
+
+    Parameters
+    ----------
+    mol : rdkit mol
+
+    Returns
+    -------
+    dgl.graph
     """
     g = dgl.DGLGraph()
     g.add_nodes(mol.GetNumAtoms())
@@ -186,6 +193,17 @@ def get_global_features(mol):
 
 class GraphData(Dataset):
     def __init__(self, inchi, labels, mask):
+        """Main loading data class
+
+        Parameters
+        ----------
+        inchi : list
+            A list with inchis
+        labels : list
+            List of lists containing the tasks 
+        mask : [type]
+            List of lists containing a boolean mask for missing values.
+        """
         self.inchi = inchi
         self.labels = np.array(labels, dtype=np.float32)
         self.mask = np.array(mask, dtype=np.bool)
@@ -199,7 +217,7 @@ class GraphData(Dataset):
             mol_to_dgl(mol),
             get_global_features(mol),
             self.labels[idx, :],
-            self.mask[idx, :],
+            self.mask[idx, :]
         )
 
     def __len__(self):
@@ -207,6 +225,16 @@ class GraphData(Dataset):
 
 
 def collate_pair(samples):
+    """Collate function for batching graphs while loading data
+
+    Parameters
+    ----------
+    samples : tuple
+        Tuple of lists containi
+    Returns
+    -------
+    tuple
+    """
     graphs_i, g_feats, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
     return (
