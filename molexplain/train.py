@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # values_train, values_test = values[idx_train, :], values[idx_test, :]
     # mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
 
-    data_train = GraphData(inchis, values, mask, add_hs=False)
+    data_train = GraphData(inchis, values, mask, add_hs=True)
     # data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
 
     sample_item = data_train[0]
@@ -188,4 +188,4 @@ if __name__ == "__main__":
         # )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "CYP3A4_noHs.pt"))
+    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "CYP3A4_Hs.pt"))
