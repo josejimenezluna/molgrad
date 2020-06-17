@@ -91,4 +91,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return SVG(svg), atom_importance, edge_importance, global_importance
+    return svg, SVG(svg), atom_importance, edge_importance, global_importance

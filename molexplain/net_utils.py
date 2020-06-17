@@ -38,6 +38,7 @@ ATOM_TYPES = [
     "Si",
     "Te",
     "Zn",
+    "Sb"
 ]
 
 
@@ -97,7 +98,7 @@ def mol_to_dgl(mol):
     atom_features = []
 
     pd = GetPeriodicTable()
-    ComputeGasteigerCharges(mol)
+    # ComputeGasteigerCharges(mol)
 
     for atom in mol.GetAtoms():
         atom_feat = []
@@ -123,7 +124,7 @@ def mol_to_dgl(mol):
 
         mass = pd.GetAtomicWeight(atom.GetSymbol())
         vdw = pd.GetRvdw(atom.GetSymbol())
-        pcharge = float(atom.GetProp("_GasteigerCharge"))
+        # pcharge = float(atom.GetProp("_GasteigerCharge"))
 
         atom_feat.extend(atom_type)
         atom_feat.extend(chiral)
@@ -139,7 +140,7 @@ def mol_to_dgl(mol):
         atom_feat.append(ring)
         atom_feat.append(mass)
         atom_feat.append(vdw)
-        atom_feat.append(pcharge)
+        # atom_feat.append(pcharge)
         atom_features.append(atom_feat)
 
     for bond in mol.GetBonds():
@@ -192,7 +193,7 @@ def get_global_features(mol):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchi, labels, mask):
+    def __init__(self, inchi, labels, mask, add_hs=True):
         """Main loading data class
 
         Parameters
@@ -207,12 +208,14 @@ class GraphData(Dataset):
         self.inchi = inchi
         self.labels = np.array(labels, dtype=np.float32)
         self.mask = np.array(mask, dtype=np.bool)
+        self.add_hs = add_hs
 
         assert len(self.inchi) == len(self.labels)
 
     def __getitem__(self, idx):
         mol = MolFromInchi(self.inchi[idx])
-        mol = AddHs(mol)
+        if self.add_hs:
+            mol = AddHs(mol)
         return (
             mol_to_dgl(mol),
             get_global_features(mol),

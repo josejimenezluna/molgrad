@@ -48,6 +48,7 @@ class MPNNPredictor(nn.Module):
         num_step_message_passing=6,
         num_step_set2set=6,
         num_layer_set2set=3,
+        output_f=None
     ):
         super(MPNNPredictor, self).__init__()
 
@@ -77,6 +78,8 @@ class MPNNPredictor(nn.Module):
             nn.Linear(node_out_feats, n_tasks),
         )
 
+        self.output_f = output_f
+
     def forward(self, g, g_feat):
         """Graph-level regression/soft classification.
 
@@ -94,4 +97,7 @@ class MPNNPredictor(nn.Module):
         graph_feats = self.readout(g, node_feats)
         global_feats = self.global_subnet(g_feat)
         cat = torch.cat([graph_feats, global_feats], dim=1)
-        return self.predict(cat)
+        out = self.predict(cat)
+        if self.output_f is not None:
+            out = self.output_f(out)
+        return out
