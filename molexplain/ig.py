@@ -38,7 +38,7 @@ def integrated_gradients(graph, g_feat, model, task, n_steps=50):
     """
     graphs, g_feats = gen_steps(graph, g_feat, n_steps=n_steps)
     values_atom = []
-    values_edge = []
+    values_bond = []
     values_global = []
 
     for g, gf in zip(graphs, g_feats):
@@ -52,13 +52,13 @@ def integrated_gradients(graph, g_feat, model, task, n_steps=50):
 
         preds[0][task].backward()
         atom_grads = g.ndata["feat"].grad.unsqueeze(2)
-        edge_grads = g.edata['feat'].grad.unsqueeze(2)
+        bond_grads = g.edata['feat'].grad.unsqueeze(2)
         values_atom.append(atom_grads)
-        values_edge.append(edge_grads)
+        values_bond.append(bond_grads)
         values_global.append(gf.grad)
     return (
         torch.cat(values_atom, dim=2).mean(dim=(1, 2)).cpu().numpy(),
-        torch.cat(values_edge, dim=2).mean(dim=(1, 2)).cpu().numpy(),
+        torch.cat(values_bond, dim=2).mean(dim=(1, 2)).cpu().numpy(),
         torch.cat(values_global).mean(axis=0).cpu().numpy()
     )
 
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     data = GraphData(inchis, values, mask)
     graph, g_feat, _, _ = data[20]
 
-    atom_importance, edge_importance, global_importance = integrated_gradients(
+    atom_importance, bond_importance, global_importance = integrated_gradients(
         graph, g_feat, model, task=3, n_steps=50
     )
