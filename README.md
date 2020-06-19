@@ -6,18 +6,18 @@ Install conda environment (assumes CUDA10.1 compatible driver is available):
 conda env create -f environment.yml
 ```
 
-Download AZ ChEMBL models:
+Download AZ & CYP models:
 
 ``` bash
 cd molexplain
-mkdir models && cd models
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1EoYUv-dd8VgApxwKvwBQ8c8GFKXU0U5Z' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1EoYUv-dd8VgApxwKvwBQ8c8GFKXU0U5Z" -O AZ_ChEMBL.pt && rm -rf /tmp/cookies.txt
+wget https://polybox.ethz.ch/index.php/s/dDDMzi3rTbqkWOV/download -O models.tar.gz
+tar -xf models.tar.gz
 ```
 
 Or download processed data and train the model yourself:
 
 ```bash
 cd molexplain
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=16f0FBuDF_RDOedVKRK9ItT2OGTLL4CaP' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=16f0FBuDF_RDOedVKRK9ItT2OGTLL4CaP" -O data.tar.gz && rm -rf /tmp/cookies.txt
+wget https://polybox.ethz.ch/index.php/s/K0orABbeJmwOUEh/download -O data.tar.gz
 tar -xf data.tar.gz
 ```

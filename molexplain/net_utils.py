@@ -12,7 +12,6 @@ from rdkit.Chem.inchi import MolFromInchi
 from rdkit.Chem.Lipinski import NumHDonors
 from rdkit.Chem.rdMolDescriptors import CalcTPSA
 from rdkit.Chem.rdmolops import AddHs
-from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from torch.utils.data import Dataset
 
 ATOM_TYPES = [
@@ -98,7 +97,6 @@ def mol_to_dgl(mol):
     atom_features = []
 
     pd = GetPeriodicTable()
-    # ComputeGasteigerCharges(mol)
 
     for atom in mol.GetAtoms():
         atom_feat = []
@@ -124,7 +122,6 @@ def mol_to_dgl(mol):
 
         mass = pd.GetAtomicWeight(atom.GetSymbol())
         vdw = pd.GetRvdw(atom.GetSymbol())
-        # pcharge = float(atom.GetProp("_GasteigerCharge"))
 
         atom_feat.extend(atom_type)
         atom_feat.extend(chiral)
@@ -140,7 +137,6 @@ def mol_to_dgl(mol):
         atom_feat.append(ring)
         atom_feat.append(mass)
         atom_feat.append(vdw)
-        # atom_feat.append(pcharge)
         atom_features.append(atom_feat)
 
     for bond in mol.GetBonds():
