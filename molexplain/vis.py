@@ -12,12 +12,22 @@ GREEN_COL = (0, 1, 0)
 RED_COL = (1, 0, 0)
 
 
-def determine_atom_col(atom_importance, eps=1e-5):
+def determine_atom_col(mol, atom_importance, bond_importance, version=2, eps=1e-5):
     """
     Colors atoms with positive and negative contributions
     as green and red respectively, using an `eps` absolute
     threshold.
     """
+    if version == 2:
+        bond_idx = []
+
+        for bond in mol.GetBonds():
+            bond_idx.append((bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()))
+
+        for (atom_i_idx, atom_j_idx), b_imp in zip(bond_idx, bond_importance):
+            atom_importance[atom_i_idx] += b_imp / 2
+            atom_importance[atom_j_idx] += b_imp / 2
+
     atom_col = {}
 
     for idx, v in enumerate(atom_importance):
@@ -25,6 +35,7 @@ def determine_atom_col(atom_importance, eps=1e-5):
             atom_col[idx] = GREEN_COL
         if v < -eps:
             atom_col[idx] = RED_COL
+
     return atom_col
 
 
@@ -48,7 +59,8 @@ def molecule_importance(
     model,
     task=0,
     n_steps=50,
-    eps=1e-5,
+    version=2,
+    eps=1e-4,
     vis_factor=10,
     img_width=400,
     img_height=200,
@@ -64,9 +76,13 @@ def molecule_importance(
         mol = AddHs(mol)
     graph = mol_to_dgl(mol)
     g_feat = get_global_features(mol)
-    atom_importance, global_importance = integrated_gradients(graph, g_feat,model, task=task, n_steps=n_steps)
+    atom_importance, bond_importance, global_importance = integrated_gradients(
+        graph, g_feat, model, task=task, n_steps=n_steps
+    )
 
-    highlightAtomColors = determine_atom_col(atom_importance, eps=eps)
+    highlightAtomColors = determine_atom_col(
+        mol, atom_importance, bond_importance, version=version, eps=eps
+    )
     highlightAtoms = list(highlightAtomColors.keys())
 
     highlightBondColors = determine_bond_col(highlightAtomColors, mol)
@@ -88,4 +104,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return SVG(svg), atom_importance, global_importance
+    return svg, SVG(svg), atom_importance, bond_importance, global_importance

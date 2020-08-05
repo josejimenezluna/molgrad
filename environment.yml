@@ -18,6 +18,7 @@ dependencies:
   - torchvision=0.5.0
   - tqdm
   - dgl-cuda10.1
+  - dgllife
   - scikit-learn
   - jupyter
   - pip:

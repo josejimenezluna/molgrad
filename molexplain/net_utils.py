@@ -38,6 +38,7 @@ ATOM_TYPES = [
     "Si",
     "Te",
     "Zn",
+    "Sb"
 ]
 
 
@@ -61,19 +62,43 @@ HYBRIDIZATION = [
 ]
 
 
+BOND_TYPES = [
+    rdkit.Chem.rdchem.BondType.SINGLE,
+    rdkit.Chem.rdchem.BondType.DOUBLE,
+    rdkit.Chem.rdchem.BondType.TRIPLE,
+    rdkit.Chem.rdchem.BondType.AROMATIC,
+]
+
+BOND_STEREO = [
+    rdkit.Chem.rdchem.BondStereo.STEREONONE,
+    rdkit.Chem.rdchem.BondStereo.STEREOANY,
+    rdkit.Chem.rdchem.BondStereo.STEREOZ,
+    rdkit.Chem.rdchem.BondStereo.STEREOE,
+]
+
+
 def mol_to_dgl(mol):
-    """
-    Converts mol to featurized DGL graph.
+    """Featurizes an rdkit mol object to a DGL Graph, with node and edge features
+
+    Parameters
+    ----------
+    mol : rdkit mol
+
+    Returns
+    -------
+    dgl.graph
     """
     g = dgl.DGLGraph()
     g.add_nodes(mol.GetNumAtoms())
     g.set_n_initializer(dgl.init.zero_initializer)
     g.set_e_initializer(dgl.init.zero_initializer)
 
-    features = []
+    # Atom features
+
+    atom_features = []
 
     pd = GetPeriodicTable()
-    ComputeGasteigerCharges(mol)
+    # ComputeGasteigerCharges(mol)
 
     for atom in mol.GetAtoms():
         atom_feat = []
@@ -99,7 +124,7 @@ def mol_to_dgl(mol):
 
         mass = pd.GetAtomicWeight(atom.GetSymbol())
         vdw = pd.GetRvdw(atom.GetSymbol())
-        pcharge = float(atom.GetProp("_GasteigerCharge"))
+        # pcharge = float(atom.GetProp("_GasteigerCharge"))
 
         atom_feat.extend(atom_type)
         atom_feat.extend(chiral)
@@ -115,17 +140,48 @@ def mol_to_dgl(mol):
         atom_feat.append(ring)
         atom_feat.append(mass)
         atom_feat.append(vdw)
-        atom_feat.append(pcharge)
-        features.append(atom_feat)
+        # atom_feat.append(pcharge)
+        atom_features.append(atom_feat)
 
     for bond in mol.GetBonds():
         g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
 
-    g.ndata["feat"] = torch.FloatTensor(features)
+    g.ndata["feat"] = torch.FloatTensor(atom_features)
+
+    # Bond features
+
+    bond_features = []
+    for bond in mol.GetBonds():
+        bond_feat = []
+
+        bond_type = [0] * len(BOND_TYPES)
+        bond_type[BOND_TYPES.index(bond.GetBondType())] = 1
+
+        bond_stereo = [0] * len(BOND_STEREO)
+        bond_stereo[BOND_STEREO.index(bond.GetStereo())] = 1
+
+        bond_feat.extend(bond_type)
+        bond_feat.extend(bond_stereo)
+        bond_feat.append(float(bond.GetIsConjugated()))
+        bond_feat.append(float(bond.IsInRing()))
+        bond_features.append(bond_feat)
+
+    g.edata["feat"] = torch.FloatTensor(bond_features)
     return g
 
 
 def get_global_features(mol):
+    """Computes global-level features for a molecule.
+
+    Parameters
+    ----------
+    mol : rdkit mol
+
+    Returns
+    -------
+    [np.ndarray]
+        Global-level features
+    """
     # MW, TPSA, logP, n.hdonors
     mw = MolWt(mol)
     tpsa = CalcTPSA(mol)
@@ -137,21 +193,34 @@ def get_global_features(mol):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchi, labels, mask):
+    def __init__(self, inchi, labels, mask, add_hs=True):
+        """Main loading data class
+
+        Parameters
+        ----------
+        inchi : list
+            A list with inchis
+        labels : list
+            List of lists containing the tasks 
+        mask : [type]
+            List of lists containing a boolean mask for missing values.
+        """
         self.inchi = inchi
         self.labels = np.array(labels, dtype=np.float32)
         self.mask = np.array(mask, dtype=np.bool)
+        self.add_hs = add_hs
 
         assert len(self.inchi) == len(self.labels)
 
     def __getitem__(self, idx):
         mol = MolFromInchi(self.inchi[idx])
-        mol = AddHs(mol)
+        if self.add_hs:
+            mol = AddHs(mol)
         return (
             mol_to_dgl(mol),
             get_global_features(mol),
             self.labels[idx, :],
-            self.mask[idx, :],
+            self.mask[idx, :]
         )
 
     def __len__(self):
@@ -159,6 +228,16 @@ class GraphData(Dataset):
 
 
 def collate_pair(samples):
+    """Collate function for batching graphs while loading data
+
+    Parameters
+    ----------
+    samples : tuple
+        Tuple of lists containi
+    Returns
+    -------
+    tuple
+    """
     graphs_i, g_feats, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
     return (
@@ -167,13 +246,3 @@ def collate_pair(samples):
         torch.as_tensor(labels),
         torch.as_tensor(masks),
     )
-
-
-if __name__ == "__main__":
-    from molexplain.utils import PROCESSED_DATA_PATH
-
-    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
-    mol = MolFromInchi(inchis[243], sanitize=False, removeHs=False)
-
-    from rdkit.Chem.rdmolops import AddHs
-    g_feat = get_global_features(mol)

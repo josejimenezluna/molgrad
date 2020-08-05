@@ -37,37 +37,48 @@ def integrated_gradients(graph, g_feat, model, task, n_steps=50):
     specific `task` number, using a Monte Carlo approx. of `n_steps`. 
     """
     graphs, g_feats = gen_steps(graph, g_feat, n_steps=n_steps)
-    values_graph = []
+    values_atom = []
+    values_bond = []
     values_global = []
 
     for g, gf in zip(graphs, g_feats):
         g = g.to(DEVICE)
         gf = gf.to(DEVICE)
         g.ndata["feat"].requires_grad_()
+        g.edata["feat"].requires_grad_()
         gf.requires_grad_()
 
         preds = model(g, gf)
+
         preds[0][task].backward()
         atom_grads = g.ndata["feat"].grad.unsqueeze(2)
-        values_graph.append(atom_grads)
+        bond_grads = g.edata['feat'].grad.unsqueeze(2)
+        values_atom.append(atom_grads)
+        values_bond.append(bond_grads)
         values_global.append(gf.grad)
     return (
-        torch.cat(values_graph, dim=2).mean(dim=(1, 2)).cpu().numpy(),
-        torch.cat(values_global).mean(axis=0).cpu().numpy(),
+        torch.cat(values_atom, dim=2).mean(dim=(1, 2)).cpu().numpy(),
+        torch.cat(values_bond, dim=2).mean(dim=(1, 2)).cpu().numpy(),
+        torch.cat(values_global).mean(axis=0).cpu().numpy()
     )
 
 
 if __name__ == "__main__":
-    model = torch.load(
-        os.path.join(MODELS_PATH, "AZ_ChEMBL_global.pt"), map_location=DEVICE
-    )
+    from molexplain.net import MPNNPredictor
 
     inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
     values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
     mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
 
+    model = MPNNPredictor(
+        node_in_feats=46, edge_in_feats=10, global_feats=4, n_tasks=values.shape[1]
+    ).to(DEVICE)
+
+    model.load_state_dict(torch.load(os.path.join(MODELS_PATH, 'AZ_ChEMBL_MPNN.pt')))
+
     data = GraphData(inchis, values, mask)
-    graph, g_feat, _, _ = data[0]
-    atom_importance, global_importance = integrated_gradients(
-        graph, g_feat, model, task=0, n_steps=50
+    graph, g_feat, _, _ = data[20]
+
+    atom_importance, bond_importance, global_importance = integrated_gradients(
+        graph, g_feat, model, task=3, n_steps=50
     )

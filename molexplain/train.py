@@ -1,28 +1,26 @@
 import multiprocessing
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from molexplain.net import GAT
+from molexplain.net import MPNNPredictor
 from molexplain.net_utils import GraphData, collate_pair
-from molexplain.utils import PROCESSED_DATA_PATH, MODELS_PATH
+from molexplain.utils import DATA_PATH, MODELS_PATH
 
-NUM_LAYERS = 6
-NUM_HEADS = 12
-NUM_HIDDEN = 128
-NUM_GLOBAL_HIDDEN = 32
-NUM_OUTHEADS = 32
+N_MESSPASS = 12
 
 BATCH_SIZE = 32
 INITIAL_LR = 1e-4
-N_EPOCHS = 200
+N_EPOCHS = 150
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
@@ -49,8 +47,9 @@ def train_loop(loader, model, loss_fn, opt):
 
         opt.zero_grad()
         out = model(g, g_feat)
+
         out = out[mask]
-        loss = loss_fn(label, out)
+        loss = loss_fn(out, label)
         loss.backward()
         opt.step()
 
@@ -88,23 +87,27 @@ def metrics(ys, yhats, masks):
     predicted `yhats` values, taking into account missing values specified by `masks`.
     """
     n_tasks = ys.shape[1]
-    rs = []
     rmses = []
+    corrs = []
 
     for task_no in range(n_tasks):
         y, yhat = (
             ys[masks[:, task_no], task_no].numpy(),
             yhats[masks[:, task_no], task_no].numpy(),
         )
-        rs.append(np.corrcoef((y, yhat))[0, 1])
         rmses.append(rmse(y, yhat))
-    return rs, rmses
+        corrs.append(np.corrcoef(y, yhat)[0, 1])
+    return rmses, corrs
 
 
 if __name__ == "__main__":
-    inchis = np.load(os.path.join(PROCESSED_DATA_PATH, "inchis.npy"))
-    values = np.load(os.path.join(PROCESSED_DATA_PATH, "values.npy"))
-    mask = np.load(os.path.join(PROCESSED_DATA_PATH, "mask.npy"))
+    # hERG public training
+    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "rb") as handle:
+        inchis, values = pickle.load(handle)
+
+    inchis = np.array(inchis)
+    values = np.array(values)[:, np.newaxis]
+    mask = np.array([True for l in range(values.shape[0])])[:, np.newaxis]
 
     idx_train, idx_test = train_test_split(
         np.arange(len(inchis)), test_size=0.2, random_state=1337
@@ -114,12 +117,13 @@ if __name__ == "__main__":
     values_train, values_test = values[idx_train, :], values[idx_test, :]
     mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
 
-    data_train = GraphData(inchis_train, values_train, mask_train)
-    data_test = GraphData(inchis_test, values_test, mask_test)
+    data_train = GraphData(inchis, values, mask, add_hs=False)
+    data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
 
     sample_item = data_train[0]
-    in_dim = sample_item[0].ndata["feat"].shape[1]
-    n_global = len(sample_item[1])
+    a_dim = sample_item[0].ndata["feat"].shape[1]
+    e_dim = sample_item[0].edata["feat"].shape[1]
+    g_dim = len(sample_item[1])
 
     loader_train = DataLoader(
         data_train,
@@ -137,16 +141,13 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    model = GAT(
-        num_layers=NUM_LAYERS,
-        in_dim=in_dim,
-        n_global=n_global,
-        num_hidden=NUM_HIDDEN,
-        global_hidden=NUM_GLOBAL_HIDDEN,
-        num_classes=values.shape[1],
-        heads=([NUM_HEADS] * NUM_LAYERS) + [NUM_OUTHEADS],
-        activation=F.relu,
-        residual=True,
+    model = MPNNPredictor(
+        node_in_feats=a_dim,
+        edge_in_feats=e_dim,
+        global_feats=g_dim,
+        n_tasks=values.shape[1],
+        num_step_message_passing=N_MESSPASS,
+        output_f=None,
     ).to(DEVICE)
 
     opt = Adam(model.parameters(), lr=INITIAL_LR)
@@ -159,13 +160,13 @@ if __name__ == "__main__":
         train_losses.extend(t_l)
 
         y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
-        r, rmse_ = metrics(y_test, yhat_test, mask_test)
+        rmse_test, corr_test = metrics(y_test, yhat_test, mask_test)
         print(
-            "Test R:[{}], RMSE: [{}]".format(
-                "\t".join("{:.3f}".format(x) for x in r),
-                "\t".join("{:.3f}".format(x) for x in rmse_),
+            "Test RMSE:[{}], R: [{}]".format(
+                "\t".join("{:.3f}".format(x) for x in rmse_test),
+                "\t".join("{:.3f}".format(x) for x in corr_test),
             )
         )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model, os.path.join(MODELS_PATH, "AZ_ChEMBL_global.pt"))
+    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "hERG_noHs.pt"))
