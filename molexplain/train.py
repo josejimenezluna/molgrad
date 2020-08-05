@@ -1,19 +1,20 @@
 import multiprocessing
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, accuracy_score
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from molexplain.net import MPNNPredictor
 from molexplain.net_utils import GraphData, collate_pair
-from molexplain.utils import MODELS_PATH, PROCESSED_DATA_PATH
+from molexplain.utils import DATA_PATH, MODELS_PATH
 
 N_MESSPASS = 12
 
@@ -86,58 +87,38 @@ def metrics(ys, yhats, masks):
     predicted `yhats` values, taking into account missing values specified by `masks`.
     """
     n_tasks = ys.shape[1]
-    accs = []
-    aucs = []
+    rmses = []
+    corrs = []
 
     for task_no in range(n_tasks):
         y, yhat = (
             ys[masks[:, task_no], task_no].numpy(),
             yhats[masks[:, task_no], task_no].numpy(),
         )
-        accs.append(accuracy_score(y, yhat > 0.5))
-        aucs.append(roc_auc_score(y, yhat))
-    return accs, aucs
+        rmses.append(rmse(y, yhat))
+        corrs.append(np.corrcoef(y, yhat)[0, 1])
+    return rmses, corrs
 
 
 if __name__ == "__main__":
-    df = pd.read_csv('../cyp/CYP3A4.csv', header=0, sep=';')
-    smiles = df['SMILES'].to_numpy()
-
-    from rdkit.Chem import MolFromSmiles
-    from rdkit.Chem.inchi import MolFromInchi, MolToInchi
-
-    inchis = []
-    invalid_idx = []
-
-    for idx, sm in enumerate(smiles):
-        try:
-            mol = MolFromSmiles(sm)
-            inchi = MolToInchi(mol)
-            mol_back = MolFromInchi(inchi)
-            if mol_back is not None:
-                inchis.append(inchi)
-            else:
-                invalid_idx.append(idx)
-        except:
-            invalid_idx.append(idx)
-            continue
+    # hERG public training
+    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "rb") as handle:
+        inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
-    values = np.array([1.0 if l == 'Active' else 0.0 for l in df['Class']])[:, np.newaxis]
-    value_idx = np.setdiff1d(np.arange(len(values)), np.array(invalid_idx))
-    values = values[value_idx, :]
+    values = np.array(values)[:, np.newaxis]
     mask = np.array([True for l in range(values.shape[0])])[:, np.newaxis]
 
-    # idx_train, idx_test = train_test_split(
-    #     np.arange(len(inchis)), test_size=0.2, random_state=1337
-    # )
+    idx_train, idx_test = train_test_split(
+        np.arange(len(inchis)), test_size=0.2, random_state=1337
+    )
 
-    # inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
-    # values_train, values_test = values[idx_train, :], values[idx_test, :]
-    # mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
+    inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
+    values_train, values_test = values[idx_train, :], values[idx_test, :]
+    mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
 
-    data_train = GraphData(inchis, values, mask, add_hs=True)
-    # data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
+    data_train = GraphData(inchis, values, mask, add_hs=False)
+    data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
 
     sample_item = data_train[0]
     a_dim = sample_item[0].ndata["feat"].shape[1]
@@ -152,13 +133,13 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    # loader_test = DataLoader(
-    #     data_test,
-    #     batch_size=BATCH_SIZE,
-    #     shuffle=False,
-    #     collate_fn=collate_pair,
-    #     num_workers=NUM_WORKERS,
-    # )
+    loader_test = DataLoader(
+        data_test,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        collate_fn=collate_pair,
+        num_workers=NUM_WORKERS,
+    )
 
     model = MPNNPredictor(
         node_in_feats=a_dim,
@@ -166,7 +147,7 @@ if __name__ == "__main__":
         global_feats=g_dim,
         n_tasks=values.shape[1],
         num_step_message_passing=N_MESSPASS,
-        output_f=torch.sigmoid
+        output_f=None,
     ).to(DEVICE)
 
     opt = Adam(model.parameters(), lr=INITIAL_LR)
@@ -175,17 +156,17 @@ if __name__ == "__main__":
 
     for epoch_no in range(N_EPOCHS):
         print("Train epoch {}/{}...".format(epoch_no + 1, N_EPOCHS))
-        t_l = train_loop(loader_train, model, F.binary_cross_entropy, opt)
+        t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-        # y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
-        # acc, auc = metrics(y_test, yhat_test, mask_test)
-        # print(
-        #     "Test acc:[{}], AUC: [{}]".format(
-        #         "\t".join("{:.3f}".format(x) for x in acc),
-        #         "\t".join("{:.3f}".format(x) for x in auc),
-        #     )
-        # )
+        y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
+        rmse_test, corr_test = metrics(y_test, yhat_test, mask_test)
+        print(
+            "Test RMSE:[{}], R: [{}]".format(
+                "\t".join("{:.3f}".format(x) for x in rmse_test),
+                "\t".join("{:.3f}".format(x) for x in corr_test),
+            )
+        )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "CYP3A4_Hs.pt"))
+    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "hERG_noHs.pt"))

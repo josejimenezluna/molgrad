@@ -81,6 +81,38 @@ def clean_data(list_csvs):
         pickle.dump(failed_d, handle)
 
 
+# hERG public data
+def process_herg(list_csvs):
+    df = pd.read_csv(list_csvs[0], sep="\t")
+
+    for idx, csv in enumerate(list_csvs):
+        if idx > 0:
+            df_next = pd.read_csv(csv, sep="\t")
+            df = pd.concat([df, df_next])
+
+    # filter only IC50, nM, = data.
+    df = df.loc[
+        (df.Value_type == "IC50") & (df.Unit == "nM") & (df.Relation == "="),
+        ["Canonical_smiles", "Value"],
+    ]
+
+    df.Value = -np.log10(df.Value * 1e-9) # pic50 conversion
+
+    # drop faulty molecules
+    inchis = []
+    values = []
+
+    for smi, val in tqdm(zip(df.Canonical_smiles, df.Value), total=len(df)):
+        try:
+            mol = MolFromSmiles(smi)
+            inchis.append(MolToInchi(mol))
+            values.append(val)
+        except:
+            continue
+
+    with open(os.path.join(DATA_PATH, 'herg', "data_herg.pt"), 'wb') as handle:
+        pickle.dump([inchis, values], handle)
+
 if __name__ == "__main__":
     os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
 
@@ -93,3 +125,7 @@ if __name__ == "__main__":
 
     # Convert to InChi for easy comparison
     clean_data(list_csvs)
+
+    # hERG public data
+    herg_list = glob(os.path.join(DATA_PATH, 'herg', 'part*.tsv'))
+    process_herg(herg_list)
