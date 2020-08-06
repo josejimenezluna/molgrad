@@ -97,12 +97,23 @@ def process_herg(list_csvs):
     ]
 
     df.Value = -np.log10(df.Value * 1e-9) # pic50 conversion
+    df.drop_duplicates(inplace=True)
+
+    # average values with several measurements
+    uq_smiles = pd.unique(df['Canonical_smiles']).tolist()
+    uq_values = []
+
+    print('Averaging values with equal smiles...')
+    for smi in tqdm(uq_smiles):
+        df_uq = df.loc[df['Canonical_smiles'] == smi]
+        uq_values.append(df_uq['Value'].mean())
 
     # drop faulty molecules
+    print('Dropping faulty molecules...')
     inchis = []
     values = []
 
-    for smi, val in tqdm(zip(df.Canonical_smiles, df.Value), total=len(df)):
+    for smi, val in tqdm(zip(uq_smiles, uq_values), total=len(uq_smiles)):
         try:
             mol = MolFromSmiles(smi)
             inchis.append(MolToInchi(mol))
