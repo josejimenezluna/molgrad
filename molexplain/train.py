@@ -20,7 +20,7 @@ N_MESSPASS = 12
 
 BATCH_SIZE = 32
 INITIAL_LR = 1e-4
-N_EPOCHS = 150
+N_EPOCHS = 250
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
