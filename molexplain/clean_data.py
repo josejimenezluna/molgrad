@@ -1,17 +1,19 @@
 import os
 import pickle
+import requests
 from glob import glob
 
 import numpy as np
 import pandas as pd
 from rdkit import RDLogger
 from rdkit.Chem import MolFromSmiles
-from rdkit.Chem.inchi import MolToInchi
+from rdkit.Chem.inchi import MolToInchi, MolFromInchi
 from tqdm import tqdm
 
 from molexplain.utils import DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH
 
 RDLogger.DisableLog("rdApp.*")
+REST_404 = "<h1>Page not found (404)</h1>\n"
 
 
 def gen_guide(list_csvs):
@@ -96,20 +98,20 @@ def process_herg(list_csvs):
         ["Canonical_smiles", "Value"],
     ]
 
-    df.Value = -np.log10(df.Value * 1e-9) # pic50 conversion
+    df.Value = -np.log10(df.Value * 1e-9)  # pic50 conversion
     df.drop_duplicates(inplace=True)
 
     # average values with several measurements
-    uq_smiles = pd.unique(df['Canonical_smiles']).tolist()
+    uq_smiles = pd.unique(df["Canonical_smiles"]).tolist()
     uq_values = []
 
-    print('Averaging values with equal smiles...')
+    print("Averaging values with equal smiles...")
     for smi in tqdm(uq_smiles):
-        df_uq = df.loc[df['Canonical_smiles'] == smi]
-        uq_values.append(df_uq['Value'].mean())
+        df_uq = df.loc[df["Canonical_smiles"] == smi]
+        uq_values.append(df_uq["Value"].mean())
 
     # drop faulty molecules
-    print('Dropping faulty molecules...')
+    print("Dropping faulty molecules...")
     inchis = []
     values = []
 
@@ -121,8 +123,57 @@ def process_herg(list_csvs):
         except:
             continue
 
-    with open(os.path.join(DATA_PATH, 'herg', "data_herg.pt"), 'wb') as handle:
+    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
+
+
+def process_caco2():
+    # peerJ data
+    df1 = pd.read_excel(os.path.join(DATA_PATH, "caco2", "peerj-03-1405-s001.xls"))
+    df1 = df1.loc[:, ["InChI", "Caco-2 Papp * 10^6 cm/s"]]
+    df1.dropna(inplace=True)
+    df1["Value"] = -np.log10(df1["Caco-2 Papp * 10^6 cm/s"] * 1e-6)
+
+    # plos one data
+    df2 = pd.read_csv(os.path.join(DATA_PATH, "caco2", "caco2perm_pone.csv"))
+    df2["Value"] = -np.log10(df2["Papp (Caco-2) [cm/s]"])
+    df2 = df2.loc[:, ["name", "Value"]]
+    df2.dropna(inplace=True)
+
+    iupac_rest = "http://cactus.nci.nih.gov/chemical/structure/{}/inchi"
+
+    print("Querying InchI strings from IUPAC names...")
+    inchis = []
+    values = []
+
+    for mol_name, val in tqdm(zip(df2["name"], df2["Value"]), total=len(df2)):
+        ans = requests.get(iupac_rest.format(mol_name))
+        if ans.status_code == 200:
+            inchi = ans.content.decode("utf8")
+            inchis.append(inchi)
+            values.append(val)
+
+    inchis.extend(df1["InChI"].tolist())
+    values.extend(df1["Value"].tolist())
+
+    df = pd.DataFrame({"inchi": inchis, "values": values})
+    uq_inchi = pd.unique(df["inchi"]).tolist()
+
+    print("Averaging values and ensuring rdkit readability...")
+    inchis = []
+    values = []
+
+    # Average values and make sure rdkit can read all inchis
+    for inchi in tqdm(uq_inchi):
+        mol = MolFromInchi(inchi)
+        if mol is not None:
+            df_uq = df.loc[df["inchi"] == inchi]
+            inchis.append(inchi)
+            values.append(df_uq["values"].mean())
+
+    with open(os.path.join(DATA_PATH, "caco2", "data_caco2.pt"), "wb") as handle:
+        pickle.dump([inchis, values], handle)
+
 
 if __name__ == "__main__":
     os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
@@ -138,5 +189,7 @@ if __name__ == "__main__":
     clean_data(list_csvs)
 
     # hERG public data
-    herg_list = glob(os.path.join(DATA_PATH, 'herg', 'part*.tsv'))
+    herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
     process_herg(herg_list)
+
+    # process caco2

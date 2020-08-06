@@ -101,8 +101,8 @@ def metrics(ys, yhats, masks):
 
 
 if __name__ == "__main__":
-    # hERG public training
-    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "rb") as handle:
+    # caco2 public training
+    with open(os.path.join(DATA_PATH, "caco2", "data_caco2.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
@@ -169,4 +169,4 @@ if __name__ == "__main__":
         )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "hERG_noHs.pt"))
+    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "caco2_noHs.pt"))

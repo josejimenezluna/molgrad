@@ -21,5 +21,6 @@ dependencies:
   - dgllife
   - scikit-learn
   - jupyter
+  - xlrd
   - pip:
     - requests==2.23.0
