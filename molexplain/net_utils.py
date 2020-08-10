@@ -38,7 +38,8 @@ ATOM_TYPES = [
     "Si",
     "Te",
     "Zn",
-    "Sb"
+    "Sb",
+    "Pt"
 ]
 
 

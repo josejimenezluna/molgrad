@@ -13,7 +13,7 @@ from tqdm import tqdm
 from molexplain.utils import DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH
 
 RDLogger.DisableLog("rdApp.*")
-REST_404 = "<h1>Page not found (404)</h1>\n"
+IUPAC_REST = "http://cactus.nci.nih.gov/chemical/structure/{}/inchi"
 
 
 def gen_guide(list_csvs):
@@ -83,6 +83,45 @@ def clean_data(list_csvs):
         pickle.dump(failed_d, handle)
 
 
+def smi_to_inchi_with_val(smiles, ovalues):
+    inchis = []
+    values = []
+
+    for smi, val in zip(smiles, ovalues):
+        mol = MolFromSmiles(smi)
+        if mol is not None:
+            try:
+                inchi = MolToInchi(mol)
+                inchis.append(inchi)
+                values.append(val)
+            except:
+                continue
+    return inchis, values
+
+
+def mean_by_key(df, key_col, val_col):
+    uq_keys = pd.unique(df[key_col])
+    uq_values = []
+
+    for key in uq_keys:
+        df_uq = df.loc[df[key_col] == key]
+        uq_values.append(df_uq[val_col].mean())
+    return uq_keys, uq_values
+
+
+def ensure_readability(strings, ovalues, read_mol_f):
+    strings = []
+    values = []
+
+    for s, v in zip(strings, ovalues):
+        mol = read_mol_f(s)
+        if mol is not None:
+            strings.append(s)
+            values.append(v)
+    return strings, values
+
+
+
 # hERG public data
 def process_herg(list_csvs):
     df = pd.read_csv(list_csvs[0], sep="\t")
@@ -102,28 +141,88 @@ def process_herg(list_csvs):
     df.drop_duplicates(inplace=True)
 
     # average values with several measurements
-    uq_smiles = pd.unique(df["Canonical_smiles"]).tolist()
-    uq_values = []
-
-    print("Averaging values with equal smiles...")
-    for smi in tqdm(uq_smiles):
-        df_uq = df.loc[df["Canonical_smiles"] == smi]
-        uq_values.append(df_uq["Value"].mean())
+    uq_smiles, uq_values = mean_by_key(df, 'Canonical_smiles', 'Value')
 
     # drop faulty molecules
     print("Dropping faulty molecules...")
+    inchis, values = smi_to_inchi_with_val(uq_smiles, uq_values)
+
+    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "wb") as handle:
+        pickle.dump([inchis, values], handle)
+
+
+
+def process_ppb():
     inchis = []
     values = []
 
-    for smi, val in tqdm(zip(uq_smiles, uq_values), total=len(uq_smiles)):
-        try:
-            mol = MolFromSmiles(smi)
-            inchis.append(MolToInchi(mol))
-            values.append(val)
-        except:
-            continue
+    # first dataset
+    xlsxs = glob(os.path.join(DATA_PATH, "ppb", "11095_2013_1023_MOESM[2-4]_ESM.xlsx"))
+    for idx, xlsx in enumerate(xlsxs):
+        ppb_col = "Experimental_%PPB" if idx < 3 else "Experimental PPB_[%]"
+        df1 = pd.read_excel(xlsx)
+        df1 = df1.loc[:, ["SMILES", ppb_col]]
+        inchis_1, values_1 = smi_to_inchi_with_val(df1['SMILES'], df1[ppb_col])
+        inchis.extend(inchis_1)
+        values.extend(values_1)
 
-    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "wb") as handle:
+    # second dataset
+    df2 = pd.read_excel(os.path.join(DATA_PATH, "ppb", "ci6b00291_si_001.xlsx"))
+    df2 = df2.loc[:, ["SMILES", "Fub"]]
+    df2["Value"] = 100 * (1 - df2["Fub"])
+    inchis_2, values_2 = smi_to_inchi_with_val(df2['SMILES'], df2['Value'])
+    inchis.extend(inchis_2)
+    values.extend(values_2)
+
+    # third dataset
+    df3 = pd.read_excel(
+        os.path.join(DATA_PATH, "ppb", "cmdc201700582-sup-0001-misc_information.xlsx"),
+        sheet_name=4,
+    )
+    df3 = df3.loc[:, ["SMILES", "PPB_Traditional_assay（serve as the true value）"]]
+    df3["Value"] = 100 * df3["PPB_Traditional_assay（serve as the true value）"]
+    inchis_3, values_3 = smi_to_inchi_with_val(df3['SMILES'], df3['Value'])
+    inchis.extend(inchis_3)
+    values.extend(values_3)
+
+    # fourth dataset
+    df4 = pd.read_excel(
+        os.path.join(DATA_PATH, "ppb", "jm051245vsi20061025_033631.xls")
+    )
+    df4 = df4.loc[:, ["NAME (Drug or chemical  name)", "PBexp(%)"]]
+
+    for mol_name, val in tqdm(
+        zip(df4["NAME (Drug or chemical  name)"], df4["PBexp(%)"]), total=len(df4)
+    ):
+        ans = requests.get(IUPAC_REST.format(mol_name))
+        if ans.status_code == 200:
+            inchi = ans.content.decode("utf8")
+            mol = MolFromInchi(inchi)
+            if mol is not None:
+                inchis.append(inchi)
+                values.append(val)
+
+    # fifth dataset
+    df5 = pd.read_excel(
+        os.path.join(DATA_PATH, "ppb", "mp8b00785_si_002.xlsx")
+    )
+    df5 = df5.loc[:, ["canonical_smiles", "fup"]]
+    df5['Value'] = 100 * (1 - df5['fup'])
+    inchis_5, values_5 = smi_to_inchi_with_val(df5['canonical_smiles'], df5['Value']) 
+    inchis.extend(inchis_5)
+    values.extend(values_5)
+
+    # join them all together
+    df = pd.DataFrame({'inchi': inchis,
+                       'values': values})
+
+    # average values w. equal inchi and check readability
+    print("Averaging values and ensuring rdkit readability...")
+    inchis, values = mean_by_key(df, 'inchi', 'values')
+
+    inchis, values = ensure_readability(inchis, values, MolFromInchi)
+
+    with open(os.path.join(DATA_PATH, 'ppb', 'data_ppb.pt'), 'wb') as handle:
         pickle.dump([inchis, values], handle)
 
 
@@ -140,14 +239,12 @@ def process_caco2():
     df2 = df2.loc[:, ["name", "Value"]]
     df2.dropna(inplace=True)
 
-    iupac_rest = "http://cactus.nci.nih.gov/chemical/structure/{}/inchi"
-
     print("Querying InchI strings from IUPAC names...")
     inchis = []
     values = []
 
     for mol_name, val in tqdm(zip(df2["name"], df2["Value"]), total=len(df2)):
-        ans = requests.get(iupac_rest.format(mol_name))
+        ans = requests.get(IUPAC_REST.format(mol_name))
         if ans.status_code == 200:
             inchi = ans.content.decode("utf8")
             inchis.append(inchi)
@@ -192,4 +289,8 @@ if __name__ == "__main__":
     herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
     process_herg(herg_list)
 
-    # process caco2
+    # caco2 data
+    process_caco2()
+
+    # ppb data
+    process_ppb()
