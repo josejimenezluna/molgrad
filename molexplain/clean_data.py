@@ -100,7 +100,7 @@ def smi_to_inchi_with_val(smiles, ovalues):
 
 
 def mean_by_key(df, key_col, val_col):
-    uq_keys = pd.unique(df[key_col])
+    uq_keys = pd.unique(df[key_col]).tolist()
     uq_values = []
 
     for key in uq_keys:
@@ -109,11 +109,11 @@ def mean_by_key(df, key_col, val_col):
     return uq_keys, uq_values
 
 
-def ensure_readability(strings, ovalues, read_mol_f):
+def ensure_readability(ostrings, ovalues, read_mol_f):
     strings = []
     values = []
 
-    for s, v in zip(strings, ovalues):
+    for s, v in zip(ostrings, ovalues):
         mol = read_mol_f(s)
         if mol is not None:
             strings.append(s)
