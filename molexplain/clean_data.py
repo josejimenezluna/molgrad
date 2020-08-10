@@ -121,7 +121,6 @@ def ensure_readability(ostrings, ovalues, read_mol_f):
     return strings, values
 
 
-
 # hERG public data
 def process_herg(list_csvs):
     df = pd.read_csv(list_csvs[0], sep="\t")
@@ -141,7 +140,7 @@ def process_herg(list_csvs):
     df.drop_duplicates(inplace=True)
 
     # average values with several measurements
-    uq_smiles, uq_values = mean_by_key(df, 'Canonical_smiles', 'Value')
+    uq_smiles, uq_values = mean_by_key(df, "Canonical_smiles", "Value")
 
     # drop faulty molecules
     print("Dropping faulty molecules...")
@@ -149,7 +148,6 @@ def process_herg(list_csvs):
 
     with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
-
 
 
 def process_ppb():
@@ -162,7 +160,7 @@ def process_ppb():
         ppb_col = "Experimental_%PPB" if idx < 3 else "Experimental PPB_[%]"
         df1 = pd.read_excel(xlsx)
         df1 = df1.loc[:, ["SMILES", ppb_col]]
-        inchis_1, values_1 = smi_to_inchi_with_val(df1['SMILES'], df1[ppb_col])
+        inchis_1, values_1 = smi_to_inchi_with_val(df1["SMILES"], df1[ppb_col])
         inchis.extend(inchis_1)
         values.extend(values_1)
 
@@ -170,7 +168,7 @@ def process_ppb():
     df2 = pd.read_excel(os.path.join(DATA_PATH, "ppb", "ci6b00291_si_001.xlsx"))
     df2 = df2.loc[:, ["SMILES", "Fub"]]
     df2["Value"] = 100 * (1 - df2["Fub"])
-    inchis_2, values_2 = smi_to_inchi_with_val(df2['SMILES'], df2['Value'])
+    inchis_2, values_2 = smi_to_inchi_with_val(df2["SMILES"], df2["Value"])
     inchis.extend(inchis_2)
     values.extend(values_2)
 
@@ -181,7 +179,7 @@ def process_ppb():
     )
     df3 = df3.loc[:, ["SMILES", "PPB_Traditional_assay（serve as the true value）"]]
     df3["Value"] = 100 * df3["PPB_Traditional_assay（serve as the true value）"]
-    inchis_3, values_3 = smi_to_inchi_with_val(df3['SMILES'], df3['Value'])
+    inchis_3, values_3 = smi_to_inchi_with_val(df3["SMILES"], df3["Value"])
     inchis.extend(inchis_3)
     values.extend(values_3)
 
@@ -203,26 +201,23 @@ def process_ppb():
                 values.append(val)
 
     # fifth dataset
-    df5 = pd.read_excel(
-        os.path.join(DATA_PATH, "ppb", "mp8b00785_si_002.xlsx")
-    )
+    df5 = pd.read_excel(os.path.join(DATA_PATH, "ppb", "mp8b00785_si_002.xlsx"))
     df5 = df5.loc[:, ["canonical_smiles", "fup"]]
-    df5['Value'] = 100 * (1 - df5['fup'])
-    inchis_5, values_5 = smi_to_inchi_with_val(df5['canonical_smiles'], df5['Value']) 
+    df5["Value"] = 100 * (1 - df5["fup"])
+    inchis_5, values_5 = smi_to_inchi_with_val(df5["canonical_smiles"], df5["Value"])
     inchis.extend(inchis_5)
     values.extend(values_5)
 
     # join them all together
-    df = pd.DataFrame({'inchi': inchis,
-                       'values': values})
+    df = pd.DataFrame({"inchi": inchis, "values": values})
 
     # average values w. equal inchi and check readability
     print("Averaging values and ensuring rdkit readability...")
-    inchis, values = mean_by_key(df, 'inchi', 'values')
+    inchis, values = mean_by_key(df, "inchi", "values")
 
     inchis, values = ensure_readability(inchis, values, MolFromInchi)
 
-    with open(os.path.join(DATA_PATH, 'ppb', 'data_ppb.pt'), 'wb') as handle:
+    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
 
 
