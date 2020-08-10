@@ -22,5 +22,6 @@ dependencies:
   - scikit-learn
   - jupyter
   - xlrd
+  - lxml
   - pip:
     - requests==2.23.0

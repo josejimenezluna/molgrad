@@ -208,6 +208,19 @@ def process_ppb():
     inchis.extend(inchis_5)
     values.extend(values_5)
 
+    # sixth dataset
+    df6 = pd.read_html(os.path.join(DATA_PATH, 'ppb', 'kratochwil2002.html'), header=0)[0]
+    df6 = df6.loc[:, ['Compound', 'fb (%)b']].dropna()
+
+    for mol_name, val in tqdm(zip(df6['Compound'], df6['fb (%)b']), total=len(df6)):
+        ans = requests.get(IUPAC_REST.format(mol_name))
+        if ans.status_code == 200:
+            inchi = ans.content.decode("utf8")
+            mol = MolFromInchi(inchi)
+            if mol is not None:
+                inchis.append(inchi)
+                values.append(val)
+
     # join them all together
     df = pd.DataFrame({"inchi": inchis, "values": values})
 
