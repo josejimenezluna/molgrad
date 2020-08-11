@@ -1,10 +1,10 @@
 import os
-import numpy as np
 import pickle
 
-from rdkit.Chem.inchi import MolFromInchi
+import numpy as np
 from joblib import Parallel, delayed
 from rdkit.Chem.AllChem import GetMorganFingerprint
+from rdkit.Chem.inchi import MolFromInchi
 from rdkit.DataStructs import TanimotoSimilarity
 
 from molexplain.utils import DATA_PATH
@@ -32,7 +32,7 @@ def parallel_wrapper(mol, rest_inchis, n_total):
 
 def sim_matrix(inchis):
     n_total = len(inchis)
-    sims = Parallel(n_jobs=-1, verbose=11, backend="multiprocessing")(
+    sims = Parallel(n_jobs=-1, verbose=100, backend="multiprocessing")(
         delayed(parallel_wrapper)(MolFromInchi(inchi), inchis[(idx + 1) :], n_total)
         for idx, inchi in enumerate(inchis)
     )
