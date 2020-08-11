@@ -25,6 +25,8 @@ N_EPOCHS = 250
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
+TEST_SET = False
+
 rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
 
@@ -109,16 +111,20 @@ if __name__ == "__main__":
     values = np.array(values)[:, np.newaxis]
     mask = np.array([True for l in range(values.shape[0])])[:, np.newaxis]
 
-    idx_train, idx_test = train_test_split(
-        np.arange(len(inchis)), test_size=0.2, random_state=1337
-    )
+    if TEST_SET:
+        idx_train, idx_test = train_test_split(
+            np.arange(len(inchis)), test_size=0.2, random_state=1337
+        )
 
-    inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
-    values_train, values_test = values[idx_train, :], values[idx_test, :]
-    mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
+        inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
+        values_train, values_test = values[idx_train, :], values[idx_test, :]
+        mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
 
-    data_train = GraphData(inchis_train, values_train, mask, add_hs=False)
-    data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
+        data_train = GraphData(inchis_train, values_train, mask, add_hs=False)
+        data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
+
+    else:
+        data_train = GraphData(inchis, values, mask, add_hs=False)
 
     sample_item = data_train[0]
     a_dim = sample_item[0].ndata["feat"].shape[1]
@@ -133,13 +139,14 @@ if __name__ == "__main__":
         num_workers=NUM_WORKERS,
     )
 
-    loader_test = DataLoader(
-        data_test,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        collate_fn=collate_pair,
-        num_workers=NUM_WORKERS,
-    )
+    if TEST_SET:
+        loader_test = DataLoader(
+            data_test,
+            batch_size=BATCH_SIZE,
+            shuffle=False,
+            collate_fn=collate_pair,
+            num_workers=NUM_WORKERS,
+        )
 
     model = MPNNPredictor(
         node_in_feats=a_dim,
@@ -159,14 +166,15 @@ if __name__ == "__main__":
         t_l = train_loop(loader_train, model, F.mse_loss, opt)
         train_losses.extend(t_l)
 
-        y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
-        rmse_test, corr_test = metrics(y_test, yhat_test, mask_test)
-        print(
-            "Test RMSE:[{}], R: [{}]".format(
-                "\t".join("{:.3f}".format(x) for x in rmse_test),
-                "\t".join("{:.3f}".format(x) for x in corr_test),
+        if TEST_SET:
+            y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
+            rmse_test, corr_test = metrics(y_test, yhat_test, mask_test)
+            print(
+                "Test RMSE:[{}], R: [{}]".format(
+                    "\t".join("{:.3f}".format(x) for x in rmse_test),
+                    "\t".join("{:.3f}".format(x) for x in corr_test),
+                )
             )
-        )
 
     os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
     torch.save(model.state_dict(), os.path.join(MODELS_PATH, "ppb_noHs.pt"))
