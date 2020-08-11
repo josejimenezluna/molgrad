@@ -92,8 +92,10 @@ def smi_to_inchi_with_val(smiles, ovalues):
         if mol is not None:
             try:
                 inchi = MolToInchi(mol)
-                inchis.append(inchi)
-                values.append(val)
+                m = MolFromInchi(inchi)
+                if m is not None:   # ensure rdkit can read an inchi it just wrote...
+                    inchis.append(inchi)
+                    values.append(val)
             except:
                 continue
     return inchis, values
@@ -280,6 +282,18 @@ def process_caco2():
         pickle.dump([inchis, values], handle)
 
 
+def process_cyp():
+    df = pd.read_csv(os.path.join(DATA_PATH, 'cyp', "CYP3A4.csv"), header=0, sep=";")
+    df['Value'] = [1 if class_ == 'Active' else 0 for class_ in df['Class']]
+    inchis, values = smi_to_inchi_with_val(df['SMILES'], df['Value'])
+    df = pd.DataFrame({'inchi': inchis,
+                       'values': values})
+    inchis, values = mean_by_key(df, 'inchi', 'values')
+
+    with open(os.path.join(DATA_PATH, 'cyp', 'data_cyp.pt'), 'wb') as handle:
+        pickle.dump([inchis, values], handle)
+
+
 if __name__ == "__main__":
     os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
 
@@ -302,3 +316,6 @@ if __name__ == "__main__":
 
     # ppb data
     process_ppb()
+
+    # cyp data
+    process_cyp()

@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from molexplain.net import MPNNPredictor
 from molexplain.net_utils import GraphData, collate_pair
-from molexplain.utils import DATA_PATH, MODELS_PATH
+from molexplain.utils import DATA_PATH, MODELS_PATH, LOG_PATH
 
 N_MESSPASS = 12
 
@@ -25,7 +25,8 @@ N_EPOCHS = 250
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
-TEST_SET = False
+TEST_SET = True
+TASK = "binary"
 
 rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
@@ -83,28 +84,47 @@ def eval_loop(loader, model, progress=True):
     return torch.cat(ys), torch.cat(yhats), torch.cat(masks)
 
 
-def metrics(ys, yhats, masks):
+def metrics(ys, yhats, masks, b_threshold=0.5):
     """
     Computes correlation coefficient and RMSE between target `ys` and
     predicted `yhats` values, taking into account missing values specified by `masks`.
     """
     n_tasks = ys.shape[1]
-    rmses = []
-    corrs = []
+    metric_1 = []
+    metric_2 = []
 
     for task_no in range(n_tasks):
         y, yhat = (
             ys[masks[:, task_no], task_no].numpy(),
             yhats[masks[:, task_no], task_no].numpy(),
         )
-        rmses.append(rmse(y, yhat))
-        corrs.append(np.corrcoef(y, yhat)[0, 1])
-    return rmses, corrs
+        if TASK == "regression":
+            metric_1.append(rmse(y, yhat))
+            metric_2.append(np.corrcoef(y, yhat)[0, 1])
+            metric_name_1 = "RMSE"
+            metric_name_2 = "R"
+        elif TASK == "binary":
+            metric_1.append(accuracy_score(y, yhat > b_threshold))
+            metric_2.append(roc_auc_score(y, yhat))
+            metric_name_1 = "Acc."
+            metric_name_2 = "AUC"
+        else:
+            raise ValueError("Task not supported.")
+    return metric_1, metric_2, metric_name_1, metric_name_2
 
 
 if __name__ == "__main__":
-    # caco2 public training
-    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "rb") as handle:
+    if TASK == "regression":
+        loss_fn = F.mse_loss
+
+    elif TASK == "binary":
+        loss_fn = F.binary_cross_entropy_with_logits
+    
+    else:
+        raise ValueError('Task not supported')
+
+    # public training
+    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
@@ -163,18 +183,23 @@ if __name__ == "__main__":
 
     for epoch_no in range(N_EPOCHS):
         print("Train epoch {}/{}...".format(epoch_no + 1, N_EPOCHS))
-        t_l = train_loop(loader_train, model, F.mse_loss, opt)
+        t_l = train_loop(loader_train, model, loss_fn, opt)
         train_losses.extend(t_l)
 
         if TEST_SET:
             y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
-            rmse_test, corr_test = metrics(y_test, yhat_test, mask_test)
+            metric_1, metric_2, mn1, mn2 = metrics(y_test, yhat_test, mask_test)
             print(
-                "Test RMSE:[{}], R: [{}]".format(
-                    "\t".join("{:.3f}".format(x) for x in rmse_test),
-                    "\t".join("{:.3f}".format(x) for x in corr_test),
+                "Test {}:[{}], {}: [{}]".format(
+                    mn1,
+                    "\t".join("{:.3f}".format(x) for x in metric_1),
+                    mn2,
+                    "\t".join("{:.3f}".format(x) for x in metric_2),
                 )
             )
 
-    os.makedirs(os.path.join(MODELS_PATH), exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "ppb_noHs.pt"))
+    os.makedirs(MODELS_PATH, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "cyp_noHs.pt"))
+
+    os.makedirs(LOG_PATH, exist_ok=True)
+    np.save(os.path.join(LOG_PATH, 'cyp_noHs.pt'), arr=train_losses)
