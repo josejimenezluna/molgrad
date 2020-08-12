@@ -41,7 +41,7 @@ ATOM_TYPES = [
     "Sb",
     "Pt",
     "Gd",
-    "Sn"
+    "Sn",
 ]
 
 
@@ -196,7 +196,7 @@ def get_global_features(mol):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchi, labels, mask, add_hs=True):
+    def __init__(self, inchi, labels=None, mask=None, train=True, add_hs=True):
         """Main loading data class
 
         Parameters
@@ -209,22 +209,26 @@ class GraphData(Dataset):
             List of lists containing a boolean mask for missing values.
         """
         self.inchi = inchi
-        self.labels = np.array(labels, dtype=np.float32)
-        self.mask = np.array(mask, dtype=np.bool)
+        self.train = train
+        if self.train:
+            self.labels = np.array(labels, dtype=np.float32)
+            self.mask = np.array(mask, dtype=np.bool)
+            assert len(self.inchi) == len(self.labels)
         self.add_hs = add_hs
-
-        assert len(self.inchi) == len(self.labels)
 
     def __getitem__(self, idx):
         mol = MolFromInchi(self.inchi[idx])
         if self.add_hs:
             mol = AddHs(mol)
-        return (
-            mol_to_dgl(mol),
-            get_global_features(mol),
-            self.labels[idx, :],
-            self.mask[idx, :]
-        )
+        if self.train:
+            return (
+                mol_to_dgl(mol),
+                get_global_features(mol),
+                self.labels[idx, :],
+                self.mask[idx, :],
+            )
+        else:
+            return (mol_to_dgl(mol), get_global_features(mol))
 
     def __len__(self):
         return len(self.inchi)
@@ -249,3 +253,18 @@ def collate_pair(samples):
         torch.as_tensor(labels),
         torch.as_tensor(masks),
     )
+
+
+def collate_pair_prod(samples):
+    """Collate function for batching graphs while loading data
+
+    Parameters
+    ----------
+    samples : tuple
+        Tuple of lists containi
+    Returns
+    -------
+    tuple
+    """
+    graphs_i, g_feats = map(list, zip(*samples))
+    return dgl.batch(graphs_i), torch.as_tensor(g_feats)
