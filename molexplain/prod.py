@@ -20,7 +20,7 @@ def predict(inchis, w_path, n_tasks=1, batch_size=32, progress=True):
     loader = DataLoader(
         data,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=False,
         collate_fn=collate_pair_prod,
         num_workers=NUM_WORKERS,
     )
@@ -47,7 +47,7 @@ def predict(inchis, w_path, n_tasks=1, batch_size=32, progress=True):
             g_feat = g_feat.to(DEVICE)
             out = model(g, g_feat)
             yhats.append(out.cpu())
-    return torch.cat(yhats)
+    return torch.cat(yhats).numpy()
 
 
 if __name__ == "__main__":
