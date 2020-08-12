@@ -9,9 +9,8 @@ from molexplain.net_utils import GraphData, collate_pair_prod
 from molexplain.train import DEVICE, NUM_WORKERS, N_MESSPASS
 
 
-def predict(inchis, w_path, n_tasks=1, batch_size=32, progress=True):
+def predict(inchis, w_path, n_tasks=1, batch_size=32, output_f=None, progress=True):
     data = GraphData(inchis, train=False, add_hs=False)
-
     sample_item = data[0]
     a_dim = sample_item[0].ndata["feat"].shape[1]
     e_dim = sample_item[0].edata["feat"].shape[1]
@@ -47,7 +46,10 @@ def predict(inchis, w_path, n_tasks=1, batch_size=32, progress=True):
             g_feat = g_feat.to(DEVICE)
             out = model(g, g_feat)
             yhats.append(out.cpu())
-    return torch.cat(yhats).numpy()
+    preds = torch.cat(yhats)
+    if output_f is not None:
+        preds = output_f(preds)
+    return preds.numpy()
 
 
 if __name__ == "__main__":

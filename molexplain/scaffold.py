@@ -2,6 +2,7 @@ import os
 import pickle
 
 import numpy as np
+import torch
 from joblib import Parallel, delayed
 from rdkit.Chem.AllChem import GetMorganFingerprint
 from rdkit.Chem.inchi import MolFromInchi
@@ -55,18 +56,34 @@ def diff_matrix(values):
 
 
 if __name__ == "__main__":
-    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "rb") as handle:
+    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     # Chemical similarity between ligands
-    sims = sim_matrix(inchis_herg)
+    # sims = sim_matrix(inchis)
 
-    with open(os.path.join(DATA_PATH, "herg", "sim_herg.pt"), "wb") as handle:
-        pickle.dump(sims, handle)
+    # with open(os.path.join(DATA_PATH, "herg", "sim_herg.pt"), "wb") as handle:
+    #     pickle.dump(sims, handle)
 
     # Experimental difference
     diff_exp = diff_matrix(values)
+    np.save(os.path.join(DATA_PATH, "cyp", "diff_cyp.npy"), arr=diff_exp)
 
     # Predicted difference
-    w_path = os.path.join(MODELS_PATH, "ppb_noHs.pt")
-    preds = predict(inchis, w_path)
+    w_path = os.path.join(MODELS_PATH, "cyp_noHs.pt")
+    preds = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
+
+    print('Test R: {:.3f}'.format(np.corrcoef(values, preds)[0, 1]))
+
+    diff_hat = diff_matrix(preds)
+    np.save(os.path.join(DATA_PATH, "cyp", "diff_hat.npy"), arr=diff_hat)
+
+    #
+
+    w_path = os.path.join(MODELS_PATH, "cyp_noHs_notest.pt")
+    preds_notest = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
+
+    print('Training R: {:.3f}'.format(np.corrcoef(values, preds_notest)[0, 1]))
+
+    diff_hat_notest = diff_matrix(preds_notest)
+    np.save(os.path.join(DATA_PATH, "cyp", "diff_hat_notest.npy"), arr=diff_hat_notest)
