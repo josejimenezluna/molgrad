@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     # Experimental difference
     diff_exp = diff_matrix(values)
-    np.save(os.path.join(DATA_PATH, "cyp", "diff_cyp.npy"), arr=diff_exp)
+    np.save(os.path.join(DATA_PATH, "cyp", "diff_exp.npy"), arr=diff_exp)
 
     # Predicted difference
     w_path = os.path.join(MODELS_PATH, "cyp_noHs.pt")
