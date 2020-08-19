@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -16,6 +16,7 @@ from molexplain.net import MPNNPredictor
 from molexplain.net_utils import GraphData, collate_pair
 from molexplain.utils import DATA_PATH, MODELS_PATH, LOG_PATH
 
+N_FOLDS = 10
 N_MESSPASS = 12
 
 BATCH_SIZE = 32
@@ -25,8 +26,7 @@ N_EPOCHS = 250
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
-TEST_SET = True
-TASK = "binary"
+TASK = "regression"
 
 rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
@@ -124,18 +124,15 @@ if __name__ == "__main__":
         raise ValueError('Task not supported')
 
     # public training
-    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "rb") as handle:
+    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
     values = np.array(values)[:, np.newaxis]
     mask = np.array([True for l in range(values.shape[0])])[:, np.newaxis]
+    kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=1337)
 
-    if TEST_SET:
-        idx_train, idx_test = train_test_split(
-            np.arange(len(inchis)), test_size=0.2, random_state=1337
-        )
-
+    for idx_split, (idx_train, idx_test) in enumerate(kf.split(inchis)):
         inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
         values_train, values_test = values[idx_train, :], values[idx_test, :]
         mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
@@ -143,23 +140,19 @@ if __name__ == "__main__":
         data_train = GraphData(inchis_train, values_train, mask, add_hs=False)
         data_test = GraphData(inchis_test, values_test, mask_test, add_hs=False)
 
-    else:
-        data_train = GraphData(inchis, values, mask, add_hs=False)
+        sample_item = data_train[0]
+        a_dim = sample_item[0].ndata["feat"].shape[1]
+        e_dim = sample_item[0].edata["feat"].shape[1]
+        g_dim = len(sample_item[1])
 
-    sample_item = data_train[0]
-    a_dim = sample_item[0].ndata["feat"].shape[1]
-    e_dim = sample_item[0].edata["feat"].shape[1]
-    g_dim = len(sample_item[1])
+        loader_train = DataLoader(
+            data_train,
+            batch_size=BATCH_SIZE,
+            shuffle=True,
+            collate_fn=collate_pair,
+            num_workers=NUM_WORKERS,
+        )
 
-    loader_train = DataLoader(
-        data_train,
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-        collate_fn=collate_pair,
-        num_workers=NUM_WORKERS,
-    )
-
-    if TEST_SET:
         loader_test = DataLoader(
             data_test,
             batch_size=BATCH_SIZE,
@@ -168,25 +161,24 @@ if __name__ == "__main__":
             num_workers=NUM_WORKERS,
         )
 
-    model = MPNNPredictor(
-        node_in_feats=a_dim,
-        edge_in_feats=e_dim,
-        global_feats=g_dim,
-        n_tasks=values.shape[1],
-        num_step_message_passing=N_MESSPASS,
-        output_f=None,
-    ).to(DEVICE)
+        model = MPNNPredictor(
+            node_in_feats=a_dim,
+            edge_in_feats=e_dim,
+            global_feats=g_dim,
+            n_tasks=values.shape[1],
+            num_step_message_passing=N_MESSPASS,
+            output_f=None,
+        ).to(DEVICE)
 
-    opt = Adam(model.parameters(), lr=INITIAL_LR)
+        opt = Adam(model.parameters(), lr=INITIAL_LR)
 
-    train_losses = []
+        train_losses = []
 
-    for epoch_no in range(N_EPOCHS):
-        print("Train epoch {}/{}...".format(epoch_no + 1, N_EPOCHS))
-        t_l = train_loop(loader_train, model, loss_fn, opt)
-        train_losses.extend(t_l)
+        for epoch_no in range(N_EPOCHS):
+            print("Train epoch {}/{}...".format(epoch_no + 1, N_EPOCHS))
+            t_l = train_loop(loader_train, model, loss_fn, opt)
+            train_losses.extend(t_l)
 
-        if TEST_SET:
             y_test, yhat_test, mask_test = eval_loop(loader_test, model, progress=False)
             metric_1, metric_2, mn1, mn2 = metrics(y_test, yhat_test, mask_test)
             print(
@@ -198,8 +190,14 @@ if __name__ == "__main__":
                 )
             )
 
-    os.makedirs(MODELS_PATH, exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(MODELS_PATH, "cyp_noHs.pt"))
+        # Save model, predictions and training losses
 
-    os.makedirs(LOG_PATH, exist_ok=True)
-    np.save(os.path.join(LOG_PATH, 'cyp_noHs.pt'), arr=train_losses)
+        os.makedirs(MODELS_PATH, exist_ok=True)
+        torch.save(model.state_dict(), os.path.join(MODELS_PATH, "ppb_noHs_fold{}.pt".format(idx_split)))
+
+        np.save(os.path.join(DATA_PATH, 'ppb', 'ppb_noHs_yhat_fold{}.npy'.format(idx_split)), arr=yhat_test.numpy())
+        np.save(os.path.join(DATA_PATH, 'ppb', 'ppb_noHs_y_fold{}.npy'.format(idx_split)), arr=y_test.numpy())
+
+
+        os.makedirs(LOG_PATH, exist_ok=True)
+        np.save(os.path.join(LOG_PATH, 'ppb_noHs_fold{}.pt'.format(idx_split)), arr=train_losses)
