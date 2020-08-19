@@ -13,6 +13,19 @@ from molexplain.prod import predict
 
 
 def tanimoto_sim(mol_i, mol_j, radius=2):
+    """Computes Tanimoto similarity between two mols
+
+    Parameters
+    ----------
+    mol_i : rdkit.mol
+    mol_j : rdkit.mol
+    radius : int, optional
+        [description], by default 2
+
+    Returns
+    -------
+    float
+    """
     fp_i, fp_j = (
         GetMorganFingerprint(mol_i, radius),
         GetMorganFingerprint(mol_j, radius),
@@ -33,6 +46,16 @@ def parallel_wrapper(mol, rest_inchis, n_total):
 
 
 def sim_matrix(inchis):
+    """Computes pairwise similarity matrix between all compounds in the `inchis` list.
+
+    Parameters
+    ----------
+    inchis : list
+        A list of inchi strings
+    Returns
+    -------
+    np.ndarray
+    """
     n_total = len(inchis)
     sims = Parallel(n_jobs=-1, verbose=100, backend="multiprocessing")(
         delayed(parallel_wrapper)(MolFromInchi(inchi), inchis[(idx + 1) :], n_total)
@@ -45,6 +68,18 @@ def sim_matrix(inchis):
 
 
 def diff_matrix(values):
+    """Computes pairwise difference of values in 
+
+    Parameters
+    ----------
+    values : list
+        list of numeric values
+
+    Returns
+    -------
+    np.ndarray
+        Array with pairwise differences
+    """
     n_total = len(values)
     diff = np.zeros((n_total, n_total), dtype=np.float32)
     for idx_i, val_i in enumerate(values):
@@ -60,10 +95,10 @@ if __name__ == "__main__":
         inchis, values = pickle.load(handle)
 
     # Chemical similarity between ligands
-    # sims = sim_matrix(inchis)
+    sims = sim_matrix(inchis)
 
-    # with open(os.path.join(DATA_PATH, "herg", "sim_herg.pt"), "wb") as handle:
-    #     pickle.dump(sims, handle)
+    with open(os.path.join(DATA_PATH, "herg", "sim_herg.pt"), "wb") as handle:
+        pickle.dump(sims, handle)
 
     # Experimental difference
     diff_exp = diff_matrix(values)

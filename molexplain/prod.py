@@ -10,6 +10,27 @@ from molexplain.train import DEVICE, NUM_WORKERS, N_MESSPASS
 
 
 def predict(inchis, w_path, n_tasks=1, batch_size=32, output_f=None, progress=True):
+    """Predicts values for a list of `inchis` given model weights `w_path`.
+
+    Parameters
+    ----------
+    inchis : list
+        A list of inchis that we wish to predict values for
+    w_path : pickle file path
+        A path to model weights, pickled.
+    n_tasks : int, optional
+        number of tasks, by default 1
+    batch_size : int, optional
+    output_f : [type], optional
+        Activation function to apply on the output layer if necessary, by default None
+    progress : bool, optional
+        Show progress bar, by default True
+
+    Returns
+    -------
+    np.ndarray
+        Predictions.
+    """
     data = GraphData(inchis, train=False, add_hs=False)
     sample_item = data[0]
     a_dim = sample_item[0].ndata["feat"].shape[1]
@@ -50,16 +71,3 @@ def predict(inchis, w_path, n_tasks=1, batch_size=32, output_f=None, progress=Tr
     if output_f is not None:
         preds = output_f(preds)
     return preds.numpy()
-
-
-if __name__ == "__main__":
-    import pickle
-    from molexplain.utils import MODELS_PATH, DATA_PATH
-
-    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "rb") as handle:
-        inchis, _ = pickle.load(handle)
-
-    inchis = inchis[:50]
-
-    w_path = os.path.join(MODELS_PATH, "cyp_noHs_notest.pt")
-    yhats = predict(inchis, w_path)
