@@ -23,5 +23,6 @@ dependencies:
   - jupyter
   - xlrd
   - lxml
+  - seaborn
   - pip:
     - requests==2.23.0
