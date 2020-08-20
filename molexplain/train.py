@@ -26,7 +26,7 @@ N_EPOCHS = 250
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
-TASK = "binary"
+TASK = "regression"
 
 rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         raise ValueError('Task not supported')
 
     # public training
-    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "rb") as handle:
+    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
@@ -193,10 +193,10 @@ if __name__ == "__main__":
         # Save model, predictions and training losses
 
         os.makedirs(MODELS_PATH, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(MODELS_PATH, "cyp_noHs_fold{}.pt".format(idx_split)))
+        torch.save(model.state_dict(), os.path.join(MODELS_PATH, "ppb_noHs_fold{}.pt".format(idx_split)))
 
-        np.save(os.path.join(DATA_PATH, 'cyp', 'cyp_noHs_yhat_fold{}.npy'.format(idx_split)), arr=yhat_test.numpy())
-        np.save(os.path.join(DATA_PATH, 'cyp', 'cyp_noHs_y_fold{}.npy'.format(idx_split)), arr=y_test.numpy())
+        np.save(os.path.join(DATA_PATH, 'ppb', 'ppb_noHs_yhat_fold{}.npy'.format(idx_split)), arr=yhat_test.numpy())
+        np.save(os.path.join(DATA_PATH, 'ppb', 'ppb_noHs_y_fold{}.npy'.format(idx_split)), arr=y_test.numpy())
 
         os.makedirs(LOG_PATH, exist_ok=True)
-        np.save(os.path.join(LOG_PATH, 'cyp_noHs_fold{}.pt'.format(idx_split)), arr=train_losses)
+        np.save(os.path.join(LOG_PATH, 'ppb_noHs_fold{}.pt'.format(idx_split)), arr=train_losses)
