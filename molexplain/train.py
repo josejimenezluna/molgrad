@@ -124,7 +124,7 @@ if __name__ == "__main__":
         raise ValueError('Task not supported')
 
     # public training
-    with open(os.path.join(DATA_PATH, "caco2", "data_caco2.pt"), "rb") as handle:
+    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
@@ -193,10 +193,10 @@ if __name__ == "__main__":
         # Save model, predictions and training losses
 
         os.makedirs(MODELS_PATH, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(MODELS_PATH, "caco2_noHs_fold{}.pt".format(idx_split)))
+        torch.save(model.state_dict(), os.path.join(MODELS_PATH, "herg_noHs_fold{}.pt".format(idx_split)))
 
-        np.save(os.path.join(DATA_PATH, 'caco2', 'caco2_noHs_yhat_fold{}.npy'.format(idx_split)), arr=yhat_test.numpy())
-        np.save(os.path.join(DATA_PATH, 'caco2', 'caco2_noHs_y_fold{}.npy'.format(idx_split)), arr=y_test.numpy())
+        np.save(os.path.join(DATA_PATH, 'herg', 'herg_noHs_yhat_fold{}.npy'.format(idx_split)), arr=yhat_test.numpy())
+        np.save(os.path.join(DATA_PATH, 'herg', 'herg_noHs_y_fold{}.npy'.format(idx_split)), arr=y_test.numpy())
 
         os.makedirs(LOG_PATH, exist_ok=True)
-        np.save(os.path.join(LOG_PATH, 'caco2_noHs_fold{}.pt'.format(idx_split)), arr=train_losses)
+        np.save(os.path.join(LOG_PATH, 'herg_noHs_fold{}.pt'.format(idx_split)), arr=train_losses)
