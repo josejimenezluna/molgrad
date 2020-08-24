@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # Chemical similarity between ligands
     sims = sim_matrix(inchis)
 
-    with open(os.path.join(DATA_PATH, "herg", "sim_herg.pt"), "wb") as handle:
+    with open(os.path.join(DATA_PATH, "cyp", "sim_cyp.pt"), "wb") as handle:
         pickle.dump(sims, handle)
 
     # Experimental difference
