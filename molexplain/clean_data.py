@@ -1,86 +1,19 @@
 import os
 import pickle
-import requests
 from glob import glob
 
 import numpy as np
 import pandas as pd
+import requests
 from rdkit import RDLogger
 from rdkit.Chem import MolFromSmiles
-from rdkit.Chem.inchi import MolToInchi, MolFromInchi
+from rdkit.Chem.inchi import MolFromInchi, MolToInchi
 from tqdm import tqdm
 
 from molexplain.utils import DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH
 
 RDLogger.DisableLog("rdApp.*")
 IUPAC_REST = "http://cactus.nci.nih.gov/chemical/structure/{}/inchi"
-
-
-def gen_guide(list_csvs):
-    guide = {}
-    for csv in tqdm(list_csvs):
-        df = pd.read_csv(csv, header=0, sep=";")
-        desc = pd.unique(df["Assay Description"])
-        chembl_id = pd.unique(df["Assay ChEMBL ID"])
-
-        assert len(desc) == 1 and len(chembl_id) == 1
-        guide[chembl_id[0]] = desc[0]
-    return guide
-
-
-def clean_data(list_csvs):
-    failed_d = {}
-
-    for csv in list_csvs:
-        print("Now processing dataset {}...".format(os.path.basename(csv)))
-        df = pd.read_csv(csv, header=0, sep=";")
-        chembl_id = pd.unique(df["Assay ChEMBL ID"])[0]
-
-        inchis = []
-        st_type = df["Standard Type"].to_numpy()
-        st_value = df["Standard Value"].to_numpy()
-        st_unit = df["Standard Units"].to_numpy()
-
-        missing_values = np.where(np.isnan(st_value))[0]
-        non_missing_idx = np.setdiff1d(np.arange(len(df)), missing_values)
-        df = df.iloc[non_missing_idx]
-
-        failed = []
-
-        for idx, smiles in tqdm(enumerate(df["Smiles"].to_list()), total=len(df)):
-            try:
-                mol = MolFromSmiles(smiles)
-                inchis.append(MolToInchi(mol))
-            except:
-                failed.append(idx)
-
-        print("Failed to process {}/{} molecules".format(len(failed), len(df)))
-        success = np.setdiff1d(np.arange(len(df)), np.array(failed))
-
-        st_type, st_value, st_unit = (
-            st_type[success].tolist(),
-            st_value[success].tolist(),
-            st_unit[success].tolist(),
-        )
-
-        df_new = pd.DataFrame(
-            {
-                "inchi": inchis,
-                "st_type": st_type,
-                "st_value": st_value,
-                "st_unit": st_unit,
-            }
-        )
-
-        if len(df_new) > 0:
-            df_new.to_csv(
-                os.path.join(PROCESSED_DATA_PATH, "{}.csv".format(chembl_id)),
-                index=None,
-            )
-        failed_d[chembl_id] = np.unique(failed).tolist()
-
-    with open(os.path.join(DATA_PATH, "failed.pt"), "wb") as handle:
-        pickle.dump(failed_d, handle)
 
 
 def smi_to_inchi_with_val(smiles, ovalues):
@@ -93,7 +26,7 @@ def smi_to_inchi_with_val(smiles, ovalues):
             try:
                 inchi = MolToInchi(mol)
                 m = MolFromInchi(inchi)
-                if m is not None:   # ensure rdkit can read an inchi it just wrote...
+                if m is not None:  # ensure rdkit can read an inchi it just wrote...
                     inchis.append(inchi)
                     values.append(val)
             except:
@@ -211,10 +144,12 @@ def process_ppb():
     values.extend(values_5)
 
     # sixth dataset
-    df6 = pd.read_html(os.path.join(DATA_PATH, 'ppb', 'kratochwil2002.html'), header=0)[0]
-    df6 = df6.loc[:, ['Compound', 'fb (%)b']].dropna()
+    df6 = pd.read_html(os.path.join(DATA_PATH, "ppb", "kratochwil2002.html"), header=0)[
+        0
+    ]
+    df6 = df6.loc[:, ["Compound", "fb (%)b"]].dropna()
 
-    for mol_name, val in tqdm(zip(df6['Compound'], df6['fb (%)b']), total=len(df6)):
+    for mol_name, val in tqdm(zip(df6["Compound"], df6["fb (%)b"]), total=len(df6)):
         ans = requests.get(IUPAC_REST.format(mol_name))
         if ans.status_code == 200:
             inchi = ans.content.decode("utf8")
@@ -283,14 +218,13 @@ def process_caco2():
 
 
 def process_cyp():
-    df = pd.read_csv(os.path.join(DATA_PATH, 'cyp', "CYP3A4.csv"), header=0, sep=";")
-    df['Value'] = [1 if class_ == 'Active' else 0 for class_ in df['Class']]
-    inchis, values = smi_to_inchi_with_val(df['SMILES'], df['Value'])
-    df = pd.DataFrame({'inchi': inchis,
-                       'values': values})
-    inchis, values = mean_by_key(df, 'inchi', 'values')
+    df = pd.read_csv(os.path.join(DATA_PATH, "cyp", "CYP3A4.csv"), header=0, sep=";")
+    df["Value"] = [1 if class_ == "Active" else 0 for class_ in df["Class"]]
+    inchis, values = smi_to_inchi_with_val(df["SMILES"], df["Value"])
+    df = pd.DataFrame({"inchi": inchis, "values": values})
+    inchis, values = mean_by_key(df, "inchi", "values")
 
-    with open(os.path.join(DATA_PATH, 'cyp', 'data_cyp.pt'), 'wb') as handle:
+    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
 
 

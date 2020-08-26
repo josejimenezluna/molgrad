@@ -34,7 +34,7 @@ if __name__ == "__main__":
         raise ValueError("Task not supported")
 
     # public training
-    with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "rb") as handle:
+    with open(os.path.join(DATA_PATH, "caco2", "data_caco2.pt"), "rb") as handle:
         inchis, values = pickle.load(handle)
 
     inchis = np.array(inchis)
