@@ -13,30 +13,40 @@ from molexplain.utils import DATA_PATH, MODELS_PATH
 from molexplain.vis import molecule_importance
 
 
+DATASETS = ['caco2', 'herg', 'cyp', 'ppb']
+OUTPUT_F = None
+
 if __name__ == "__main__":
-    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "rb") as handle:
-        inchis, values = pickle.load(handle)
+    for data in DATASETS:
+        print('Computing atom importances for dataset {}...'.format(data))
 
-    model_pt = os.path.join(MODELS_PATH, "ppb_noHs.pt")
+        with open(os.path.join(DATA_PATH, f"{data}", f"data_{data}.pt"), "rb") as handle:
+            inchis, values = pickle.load(handle)
 
-    model = MPNNPredictor(node_in_feats=49,
-                        edge_in_feats=10,
-                        global_feats=4,
-                        n_tasks=1).to(DEVICE)
- 
-    model.load_state_dict(torch.load(model_pt,
-                                    map_location=DEVICE))
+        model_pt = os.path.join(MODELS_PATH, f"{data}_noHs_notest.pt")
 
-    atom_importances = []
+        if data == 'cyp':
+            OUTPUT_F = torch.sigmoid
 
-    for inchi in tqdm(inchis):
-        mol = MolFromInchi(inchi)
-        _, _, ai, _, _ = molecule_importance(MolFromInchi(inchi),
-                                            model,
-                                            task=0,
-                                            version=2,
-                                            addHs=False)
-        atom_importances.append(ai)
+        model = MPNNPredictor(node_in_feats=49,
+                            edge_in_feats=10,
+                            global_feats=4,
+                            output_f=OUTPUT_F,
+                            n_tasks=1).to(DEVICE)
+    
+        model.load_state_dict(torch.load(model_pt,
+                                        map_location=DEVICE))
 
-    with open(os.path.join(DATA_PATH, 'ppb', 'atom_importances.pt'), 'wb') as handle:
-        pickle.dump(atom_importances, handle)
+        atom_importances = []
+
+        for inchi in tqdm(inchis):
+            mol = MolFromInchi(inchi)
+            _, _, ai, _, _ = molecule_importance(MolFromInchi(inchi),
+                                                model,
+                                                task=0,
+                                                version=2,
+                                                addHs=False)
+            atom_importances.append(ai)
+
+        with open(os.path.join(DATA_PATH, f'{data}', 'atom_importances.pt'), 'wb') as handle:
+            pickle.dump(atom_importances, handle)
