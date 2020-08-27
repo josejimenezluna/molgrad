@@ -108,7 +108,7 @@ if __name__ == "__main__":
     w_path = os.path.join(MODELS_PATH, "cyp_noHs.pt")
     preds = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
 
-    print('Test R: {:.3f}'.format(np.corrcoef(values, preds)[0, 1]))
+    print("Test R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
 
     diff_hat = diff_matrix(preds)
     np.save(os.path.join(DATA_PATH, "cyp", "diff_hat.npy"), arr=diff_hat)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     w_path = os.path.join(MODELS_PATH, "cyp_noHs_notest.pt")
     preds_notest = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
 
-    print('Training R: {:.3f}'.format(np.corrcoef(values, preds_notest)[0, 1]))
+    print("Training R: {:.3f}".format(np.corrcoef(values, preds_notest)[0, 1]))
 
     diff_hat_notest = diff_matrix(preds_notest)
     np.save(os.path.join(DATA_PATH, "cyp", "diff_hat_notest.npy"), arr=diff_hat_notest)
