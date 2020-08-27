@@ -18,7 +18,7 @@ def determine_atom_col(mol, atom_importance, bond_importance, version=2, eps=1e-
     as green and red respectively, using an `eps` absolute
     threshold.
     """
-    if version == 2:
+    if version > 1:
         bond_idx = []
 
         for bond in mol.GetBonds():
@@ -77,7 +77,7 @@ def molecule_importance(
     graph = mol_to_dgl(mol)
     g_feat = get_global_features(mol)
     atom_importance, bond_importance, global_importance = integrated_gradients(
-        graph, g_feat, model, task=task, n_steps=n_steps
+        graph, g_feat, model, task=task, n_steps=n_steps, version=version
     )
 
     highlightAtomColors = determine_atom_col(
