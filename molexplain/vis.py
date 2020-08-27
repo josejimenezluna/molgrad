@@ -64,7 +64,7 @@ def molecule_importance(
     vis_factor=10,
     img_width=400,
     img_height=200,
-    addHs=True,
+    addHs=False,
 ):
     """
     Colors molecule according to the integrated gradients method for
