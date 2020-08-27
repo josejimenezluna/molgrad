@@ -14,7 +14,7 @@ from molexplain.vis import molecule_importance
 
 
 DATASETS = ["caco2", "herg", "cyp", "ppb"]
-VERSION = 1
+VERSION = 3
 OUTPUT_F = None
 
 if __name__ == "__main__":
