@@ -31,9 +31,20 @@ rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
 
 def train_loop(loader, model, loss_fn, opt):
-    """
-    Runs an entire training epoch for `model` using the data stored in `loader`,
+    """ Runs an entire training epoch for `model` using the data stored in `loader`,
     the loss function `loss_fn` and optimizer `opt`.
+
+    Parameters
+    ----------
+    loader : torch.utils.data.DataLoader
+    model : torch net
+    loss_fn : torch.nn.functional function
+    opt : torch.optim optimizer
+
+    Returns
+    -------
+    list
+        Training losses
     """
     model = model.train()
     progress = tqdm(loader)
@@ -61,8 +72,23 @@ def train_loop(loader, model, loss_fn, opt):
 
 
 def eval_loop(loader, model, progress=True):
-    """
-    Computes prediction for all the data stored in `loader` for `model`. 
+    """Computes prediction for all the data stored in `loader` for `model`. 
+
+    Parameters
+    ----------
+    loader : torch.utils.data.DataLoader
+    model : torch net
+    progress : bool, optional
+        whether to show progress bar, by default True
+
+    Returns
+    -------
+    ys :
+        original values
+    yhats :
+        predicted values
+    masks :
+        masks in case of multitask learning
     """
     model = model.eval()
     if progress:
@@ -84,9 +110,23 @@ def eval_loop(loader, model, progress=True):
 
 
 def metrics(ys, yhats, masks, b_threshold=0.5):
-    """
-    Computes correlation coefficient and RMSE between target `ys` and
+    """ Computes correlation coefficient and RMSE between target `ys` and
     predicted `yhats` values, taking into account missing values specified by `masks`.
+
+    Parameters
+    ----------
+    ys : torch.Tensor
+        original values
+    yhats : torch.Tensor
+        predicted values
+    masks : torch.Tensor
+        masks in the case of multitask learning
+    b_threshold : float, optional
+        threshold to filter positives for binary clas. tasks, by default 0.5
+
+    Returns
+    -------
+    metrics
     """
     n_tasks = ys.shape[1]
     metric_1 = []

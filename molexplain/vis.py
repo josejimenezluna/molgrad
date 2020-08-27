@@ -13,10 +13,29 @@ RED_COL = (1, 0, 0)
 
 
 def determine_atom_col(mol, atom_importance, bond_importance, version=2, eps=1e-5):
-    """
-    Colors atoms with positive and negative contributions
+    """ Colors atoms with positive and negative contributions
     as green and red respectively, using an `eps` absolute
     threshold.
+
+    Parameters
+    ----------
+    mol : rdkit mol
+    atom_importance : np.ndarray
+        importances given to each atom
+    bond_importance : np.ndarray
+        importances given to each bond
+    version : int, optional
+        1. does not consider bond importance
+        2. bond importance is taken into account, but fixed
+        3. bond importance is treated the same as atom importance, by default 2
+    eps : float, optional
+        threshold value for visualization - absolute importances below `eps`
+        will not be colored, by default 1e-5
+
+    Returns
+    -------
+    dict
+        atom indexes with their assigned color
     """
     if version > 1:
         bond_idx = []
@@ -40,9 +59,19 @@ def determine_atom_col(mol, atom_importance, bond_importance, version=2, eps=1e-
 
 
 def determine_bond_col(atom_col, mol):
-    """
-    Colors bonds depending on whether the atoms involved
+    """Colors bonds depending on whether the atoms involved
     share the same color.
+
+    Parameters
+    ----------
+    atom_col : np.ndarray
+        coloring assigned to each atom index
+    mol : rdkit mol
+
+    Returns
+    -------
+    dict
+        bond indexes with assigned color
     """
     bond_col = {}
 
@@ -61,16 +90,51 @@ def molecule_importance(
     n_steps=50,
     version=2,
     eps=1e-4,
-    vis_factor=10,
+    vis_factor=1.0,
     img_width=400,
     img_height=200,
     addHs=False,
 ):
-    """
-    Colors molecule according to the integrated gradients method for
+    """Colors molecule according to the integrated gradients method for
     a particular `task`, using a Monte Carlo approximation with `n_steps`.
     Uses a `vis_factor` multiplicative parameter for clearer visualization
     purposes.
+
+    Parameters
+    ----------
+    mol : rdkit mol
+    model : MPNNPredictor instance
+        A trained instance of a message passing network model
+    task : int, optional
+        Task for which to compute atom importances, by default 0
+    n_steps : int, optional
+        Number of steps in the Monte Carlo approx, by default 50
+    version : int, optional
+        Version of the algorithm to use (check determine_atom_col
+        function), by default 2
+    eps : float, optional
+        threshold value for visualization - absolute importances below `eps`
+        will not be colored, by default 1e-5, by default 1e-4
+    vis_factor : float, optional
+        value that is multiplied to the atom importances for visualization
+        purposes, by default 1.0
+    img_width, img_height: int, optional
+        Size of the generated SVG in px, by default 400, 200
+    addHs : bool, optional
+        Whether to use explicit hydrogens in the calculation, by default False
+
+    Returns
+    -------
+    svg : str
+        String of the generated SVG
+    SVG : img
+        Image of the generated SVG.
+    atom_importance: np.ndarray
+        Computed atomic importances
+    bond_importance: np.ndarray
+        Computed bond importances
+    global_importance: np.ndarray
+        Computed global importances
     """
     if addHs:
         mol = AddHs(mol)
