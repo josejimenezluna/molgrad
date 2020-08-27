@@ -14,6 +14,7 @@ from molexplain.vis import molecule_importance
 
 
 DATASETS = ["caco2", "herg", "cyp", "ppb"]
+VERSION = 1
 OUTPUT_F = None
 
 if __name__ == "__main__":
@@ -45,11 +46,11 @@ if __name__ == "__main__":
         for inchi in tqdm(inchis):
             mol = MolFromInchi(inchi)
             _, _, ai, _, _ = molecule_importance(
-                MolFromInchi(inchi), model, task=0, version=2, addHs=False
+                MolFromInchi(inchi), model, task=0, version=VERSION, addHs=False
             )
             atom_importances.append(ai)
 
         with open(
-            os.path.join(DATA_PATH, f"{data}", "atom_importances.pt"), "wb"
+            os.path.join(DATA_PATH, f"{data}", f"atom_importances_v{VERSION}.pt"), "wb"
         ) as handle:
             pickle.dump(atom_importances, handle)
