@@ -76,37 +76,3 @@ def diff_importance(mol, model, fp_size=1024, bond_radius=2, dummy_atom_no=47):
     mod_fps = np.vstack(mod_fps)
     mod_preds = model.predict(mod_fps)
     return og_pred - mod_preds
-
-
-if __name__ == "__main__":
-    import pickle
-    from molexplain.utils import DATA_PATH
-    from rdkit.Chem.inchi import MolFromInchi
-    from tqdm import tqdm
-
-    with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "rb") as handle:
-        inchis, values = pickle.load(handle)
-
-    # featurize all mols
-    feats = [featurize_ecfp4(MolFromInchi(inchi)) for inchi in tqdm(inchis)]
-    feats = np.vstack(feats)
-
-    from sklearn.ensemble import RandomForestRegressor
-
-    rf = RandomForestRegressor(n_estimators=1000, n_jobs=-2)
-    rf.fit(feats, values)
-
-    preds = rf.predict(feats)
-
-    # trial
-    diffs = [
-        diff_importance(MolFromInchi(inchi), rf, dummy_atom_no=47)
-        for inchi in tqdm(inchis)
-    ]
-    avg_diffs = [np.mean(diff) for diff in diffs]
-    sum_diffs = [np.sum(diff) for diff in diffs]
-    max_diffs = [np.max(np.abs(diff)) for diff in diffs]
-
-    print(np.corrcoef(values, avg_diffs)[0, 1])
-    print(np.corrcoef(values, sum_diffs)[0, 1])
-    print(np.corrcoef(values, max_diffs)[0, 1])

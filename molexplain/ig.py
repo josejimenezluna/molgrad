@@ -23,7 +23,7 @@ def gen_steps(graph, g_feat, n_steps, version=2):
         e_feat = graph.edata["feat"]
     g_feat = torch.as_tensor(g_feat)
 
-    for step in range(n_steps + 1):
+    for step in range(1, n_steps + 1):
         factor = step / n_steps
         g = deepcopy(graph)
         g.ndata["feat"] = factor * feat
