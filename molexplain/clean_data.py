@@ -231,16 +231,6 @@ def process_cyp():
 if __name__ == "__main__":
     os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
 
-    # Generate guide description of datasets
-    # list_csvs = glob(os.path.join(RAW_DATA_PATH, "*.csv"))
-    # guide = gen_guide(list_csvs)
-
-    # with open(os.path.join(DATA_PATH, "guide.pt"), "wb") as handle:
-    #     pickle.dump(guide, handle)
-
-    # # Convert to InChi for easy comparison
-    # clean_data(list_csvs)
-
     # hERG public data
     herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
     process_herg(herg_list)
