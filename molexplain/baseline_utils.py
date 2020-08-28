@@ -50,7 +50,7 @@ def featurize_ecfp4(mol, fp_size=1024, bond_radius=2):
     return arr
 
 
-def diff_importance(mol, model, fp_size=1024, bond_radius=2, dummy_atom_no=11):
+def diff_importance(mol, model, fp_size=1024, bond_radius=2, dummy_atom_no=47):
     """Returns atom importance based on dummy substitutions
 
     Parameters

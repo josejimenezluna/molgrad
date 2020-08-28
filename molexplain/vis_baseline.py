@@ -15,7 +15,7 @@ def molecule_importance_diff(
     fp_size=1024,
     bond_radius=2,
     dummy_atom_no=47,
-    vis_factor=1,
+    vis_factor=1.0,
     normalize=False,
     img_width=400,
     img_height=200,
@@ -35,8 +35,8 @@ def molecule_importance_diff(
         ECFP4 bond radius, by default 2
     dummy_atom_no : int, optional
         Atomic number of the dummy atom to use for substitution, by default 47 (Ag)
-    vis_factor : int, optional
-        Visualization factor, by default 1
+    vis_factor : float, optional
+        Visualization factor, by default 1.0
     normalize : bool, optional
         Whether to normalize the computed atom importances, by default False
     img_width, img_height: int, optional
