@@ -46,26 +46,20 @@ if __name__ == "__main__":
         kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=1337)
 
         fps = np.vstack([featurize_ecfp4(MolFromInchi(inchi)) for inchi in inchis])
+        rf = base_model(n_estimators=N_ESTIMATORS, n_jobs=-1)
+        rf.fit(fps, values.squeeze())
 
-        for idx_split, (idx_train, idx_test) in enumerate(kf.split(inchis)):
-            print(f"Fold {idx_split + 1}/{N_FOLDS}...")
-            fps_train, fps_test = fps[idx_train, :], fps[idx_test, :]
-            values_train, values_test = values[idx_train, :], values[idx_test, :]
+        if task == "regression":
+            yhat = rf.predict(fps)
+        elif task == "binary":
+            yhat = rf.predict_proba(fps)
 
-            rf = base_model(n_estimators=N_ESTIMATORS, n_jobs=-1)
-            rf.fit(fps_train, values_train.squeeze())
-
-            if task == "regression":
-                yhat_test = rf.predict(fps_test)
-            elif task == "binary":
-                yhat_test = rf.predict_proba(fps_test)
-
-            np.save(
-                os.path.join(
-                    DATA_PATH, f"{data}", f"{data}_yhat_fold{idx_split}_rf.npy"
-                ),
-                arr=yhat_test,
-            )
-            dump(
-                rf, os.path.join(BASELINE_MODELS_PATH, f"rf_{data}_fold{idx_split}.pt")
-            )
+        np.save(
+            os.path.join(
+                DATA_PATH, f"{data}", f"{data}_yhat_rf.npy"
+            ),
+            arr=yhat,
+        )
+        dump(
+            rf, os.path.join(BASELINE_MODELS_PATH, f"rf_{data}.pt")
+        )
