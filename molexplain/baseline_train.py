@@ -8,7 +8,6 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import KFold
 
 from molexplain.baseline_utils import featurize_ecfp4
-from molexplain.train import N_FOLDS
 from molexplain.utils import BASELINE_MODELS_PATH, DATA_PATH
 
 TASK_GUIDE = {
@@ -17,6 +16,7 @@ TASK_GUIDE = {
     "herg": "regression",
     "cyp": "classification",
 }
+N_FOLDS = 10
 N_ESTIMATORS = 1000
 
 
