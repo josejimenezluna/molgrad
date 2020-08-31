@@ -20,7 +20,6 @@ LABEL_GUIDE = {
     "herg": r"$p\mathrm{IC}_{50}$",
 }
 
-
 if __name__ == "__main__":
     # Regression plot for ppb, caco2, herg
     f, axs = plt.subplots(1, len(LABEL_GUIDE), figsize=(18, 6))
@@ -38,7 +37,7 @@ if __name__ == "__main__":
             ).flatten()
             yh = np.load(
                 os.path.join(
-                    DATA_PATH, f"{data}", f"{data}_noHs_yhat_fold{idx_split}.npy"
+                    DATA_PATH, f"{data}", f"{data}_yhat_fold{idx_split}_rf.npy"
                 )
             ).flatten()
 
@@ -59,7 +58,7 @@ if __name__ == "__main__":
         axs[idx_plot].set_xlabel(f"Experimental {LABEL_GUIDE[data]}")
         axs[idx_plot].grid(alpha=0.5)
     plt.tight_layout()
-    plt.savefig(os.path.join(FIG_PATH, "graph_performance.pdf"))
+    plt.savefig(os.path.join(FIG_PATH, "graph_performance_rf.pdf"))
     plt.close()
 
     # cyp values
@@ -75,8 +74,8 @@ if __name__ == "__main__":
         ).flatten()
         yh = np.load(
             os.path.join(
-                DATA_PATH, "cyp", f"cyp_noHs_yhat_fold{idx_split}.npy"
-            ))
+                DATA_PATH, "cyp", f"cyp_yhat_fold{idx_split}_rf.npy"
+            ))[:, 1]
         aucs.append(roc_auc_score(y, yh))
     
     print("Dataset cyp | AUC: {:.3f} ± {:.3f}".format(np.mean(aucs), np.std(aucs)))
