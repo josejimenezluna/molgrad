@@ -20,7 +20,7 @@ if __name__ == "__main__":
         print("Computing atom importances for dataset {}...".format(data))
 
         if TASK_GUIDE[data] == 'binary':
-            output_f = torch,sigmoid
+            output_f = torch.sigmoid
         else:
             output_f = None
 
