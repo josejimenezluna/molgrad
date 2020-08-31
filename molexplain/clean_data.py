@@ -71,7 +71,7 @@ def process_herg(list_csvs):
         ["Canonical_smiles", "Value"],
     ]
 
-    df.Value = -np.log10(df.Value * 1e-9)  # pic50 conversion
+    df.Value = -np.log10(df.Value * 1e-9)  # pIC50 conversion
     df.drop_duplicates(inplace=True)
 
     # average values with several measurements
