@@ -8,18 +8,21 @@ from rdkit.Chem.inchi import MolFromInchi
 from tqdm import tqdm
 
 from molexplain.net import MPNNPredictor
-from molexplain.train import DEVICE
+from molexplain.train import DEVICE, TASK_GUIDE
 from molexplain.utils import DATA_PATH, MODELS_PATH
 from molexplain.vis import molecule_importance
 
 
-DATASETS = ["caco2", "herg", "cyp", "ppb"]
-VERSION = 1
-OUTPUT_F = None
+VERSION = 2
 
 if __name__ == "__main__":
-    for data in DATASETS:
+    for data in TASK_GUIDE.keys():
         print("Computing atom importances for dataset {}...".format(data))
+
+        if TASK_GUIDE[data] == 'binary':
+            output_f = torch,sigmoid
+        else:
+            output_f = None
 
         with open(
             os.path.join(DATA_PATH, f"{data}", f"data_{data}.pt"), "rb"
@@ -28,14 +31,11 @@ if __name__ == "__main__":
 
         model_pt = os.path.join(MODELS_PATH, f"{data}_noHs_notest.pt")
 
-        if data == "cyp":
-            OUTPUT_F = torch.sigmoid
-
         model = MPNNPredictor(
             node_in_feats=49,
             edge_in_feats=10,
             global_feats=4,
-            output_f=OUTPUT_F,
+            output_f=output_f,
             n_tasks=1,
         ).to(DEVICE)
 
