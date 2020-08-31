@@ -1,9 +1,7 @@
 import os
-import torch
 
 ROOT_PATH = os.path.dirname(__file__)
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 DATA_PATH = os.path.join(ROOT_PATH, "data")
 RAW_DATA_PATH = os.path.join(ROOT_PATH, "data", "raw")
