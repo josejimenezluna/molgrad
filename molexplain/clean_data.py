@@ -176,11 +176,11 @@ def process_caco2():
     df1 = pd.read_excel(os.path.join(DATA_PATH, "caco2", "peerj-03-1405-s001.xls"))
     df1 = df1.loc[:, ["InChI", "Caco-2 Papp * 10^6 cm/s"]]
     df1.dropna(inplace=True)
-    df1["Value"] = -np.log10(df1["Caco-2 Papp * 10^6 cm/s"] * 1e-6)
+    df1["Value"] = np.log10(df1["Caco-2 Papp * 10^6 cm/s"] * 1e-6)
 
     # plos one data
     df2 = pd.read_csv(os.path.join(DATA_PATH, "caco2", "caco2perm_pone.csv"))
-    df2["Value"] = -np.log10(df2["Papp (Caco-2) [cm/s]"])
+    df2["Value"] = np.log10(df2["Papp (Caco-2) [cm/s]"])
     df2 = df2.loc[:, ["name", "Value"]]
     df2.dropna(inplace=True)
 
