@@ -11,7 +11,12 @@ from molexplain.utils import DATA_PATH, FIG_PATH
 matplotlib.use("Agg")
 
 plt.rcParams.update(
-    {"text.usetex": True, "font.family": "sans-serif", "font.sans-serif": ["Helvetica"], "font.size": 24}
+    {
+        "text.usetex": True,
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Helvetica"],
+        "font.size": 24,
+    }
 )
 
 LABEL_GUIDE = {
@@ -73,25 +78,24 @@ if __name__ == "__main__":
             os.path.join(DATA_PATH, "cyp", f"cyp_noHs_y_fold{idx_split}.npy")
         ).flatten()
         yh = np.load(
-            os.path.join(
-                DATA_PATH, "cyp", f"cyp_noHs_yhat_fold{idx_split}.npy"
-            )).flatten()
+            os.path.join(DATA_PATH, "cyp", f"cyp_noHs_yhat_fold{idx_split}.npy")
+        ).flatten()
         y_test.append(y)
         y_hat.append(yh)
         aucs.append(roc_auc_score(y, yh))
-    
+
     print("Dataset cyp | AUC: {:.3f} ± {:.3f}".format(np.mean(aucs), np.std(aucs)))
 
     y_test = np.concatenate(y_test)
     y_hat = np.concatenate(y_hat)
-    
+
     fpr, tpr, _ = roc_curve(y_test, y_hat)
     axs[3].plot(fpr, tpr, lw=1)
-    axs[3].plot([0, 1], [0, 1], color='grey', linestyle='--')
+    axs[3].plot([0, 1], [0, 1], color="grey", linestyle="--")
     axs[3].grid(alpha=0.5)
-    axs[3].set_xlabel('Specificity (CYP inhibition)')
-    axs[3].set_ylabel('Sensitivity (CYP inhibition)')
+    axs[3].set_xlabel("Specificity (CYP inhibition)")
+    axs[3].set_ylabel("Sensitivity (CYP inhibition)")
 
     plt.tight_layout()
-    plt.savefig(os.path.join(FIG_PATH, 'graph_performance.pdf'))
+    plt.savefig(os.path.join(FIG_PATH, "graph_performance.pdf"))
     plt.close()
