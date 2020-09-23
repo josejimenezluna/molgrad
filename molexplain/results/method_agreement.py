@@ -70,12 +70,10 @@ if __name__ == "__main__":
                 )
                 imp[version].append(atom_importance)
 
-        importances[f"{data}_mpnn"] = imp
-
             _, _, i_rf = molecule_importance_diff(mol, model_rf)
             imp_rf.append(i_rf)
 
-        # importances[f"{data}_mpnn"] = imp
+        importances[f"{data}_mpnn"] = imp
         importances[f"{data}_rf"] = imp_rf
 
     with open(os.path.join(DATA_PATH, f"importances_{data}"), "wb") as handle:
