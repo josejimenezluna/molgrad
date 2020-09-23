@@ -2,6 +2,8 @@ import os
 import pickle
 
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from joblib import load
 import torch
 from rdkit.Chem.inchi import MolFromInchi
@@ -33,6 +35,11 @@ def method_agreement(
     return col_mean
 
 
+def plot_agreement(scores):
+    sns.pairplot(scores)    
+
+    pass
+
 if __name__ == "__main__":
     importances = {}
 
@@ -62,6 +69,8 @@ if __name__ == "__main__":
                     mol, model, version=version
                 )
                 imp[version].append(atom_importance)
+
+        importances[f"{data}_mpnn"] = imp
 
             _, _, i_rf = molecule_importance_diff(mol, model_rf)
             imp_rf.append(i_rf)
