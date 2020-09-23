@@ -56,18 +56,18 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load(model_pt, map_location=DEVICE))
 
         for inchi in tqdm(inchis):
-            for version in range(N_VERSIONS):
-                mol = MolFromInchi(inchi)
-                _, _, atom_importance, _, _ = molecule_importance(
-                    mol, model, version=version
-                )
-                imp[version].append(atom_importance)
+            mol = MolFromInchi(inchi)
+        #     for version in range(N_VERSIONS):
+        #         _, _, atom_importance, _, _ = molecule_importance(
+        #             mol, model, version=version
+        #         )
+        #         imp[version].append(atom_importance)
 
             _, _, i_rf = molecule_importance_diff(mol, model_rf)
             imp_rf.append(i_rf)
 
-        importances[f"{data}_mpnn"] = imp
-        importances[f"{data}_rf"] = i_rf
+        # importances[f"{data}_mpnn"] = imp
+        importances[f"{data}_rf"] = imp_rf
 
     with open(os.path.join(DATA_PATH, f"importances_{data}"), "wb") as handle:
         pickle.dump(importances, handle)
