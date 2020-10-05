@@ -77,7 +77,7 @@ if __name__ == "__main__":
             train_losses.extend(t_l)
 
         os.makedirs(MODELS_PATH, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(MODELS_PATH, f"{data}_noHs_prod.pt"))
+        torch.save(model.state_dict(), os.path.join(MODELS_PATH, f"{data}_noHs.pt"))
 
         os.makedirs(LOG_PATH, exist_ok=True)
-        np.save(os.path.join(LOG_PATH, f'{data}_noHs_prod.pt'), arr=train_losses)
+        np.save(os.path.join(LOG_PATH, f'{data}_noHs.pt'), arr=train_losses)

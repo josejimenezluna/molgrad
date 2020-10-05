@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
         for inchi in tqdm(inchis):
             mol = MolFromInchi(inchi)
-            for version in range(N_VERSIONS):
+            for version in range(1, N_VERSIONS + 1):
                 _, _, atom_importance, _, _ = molecule_importance(
                     mol, model, version=version
                 )
@@ -77,5 +77,5 @@ if __name__ == "__main__":
         importances[f"{data}_mpnn"] = imp
         importances[f"{data}_rf"] = imp_rf
 
-    with open(os.path.join(DATA_PATH, f"importances_{data}"), "wb") as handle:
+    with open(os.path.join(DATA_PATH, f'{data}', f"importances.pt"), "wb") as handle:
         pickle.dump(importances, handle)
