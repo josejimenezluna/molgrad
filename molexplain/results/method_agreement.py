@@ -69,7 +69,7 @@ if __name__ == "__main__":
                 _, _, atom_importance, _, _ = molecule_importance(
                     mol, model, version=version
                 )
-                imp[version].append(atom_importance)
+                imp[version - 1].append(atom_importance)
 
             _, _, i_rf = molecule_importance_diff(mol, model_rf)
             imp_rf.append(i_rf)
