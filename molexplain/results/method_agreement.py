@@ -37,8 +37,9 @@ def method_agreement(
 
 def plot_agreement(scores):
     sns.pairplot(scores)    
+    plt.show()
 
-    pass
+
 
 if __name__ == "__main__":
     importances = {}

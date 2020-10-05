@@ -57,7 +57,7 @@ def ensure_readability(ostrings, ovalues, read_mol_f):
 
 
 # hERG public data
-def process_herg(list_csvs):
+def process_herg(list_csvs, keep_operators=True):
     df = pd.read_csv(list_csvs[0], sep="\t")
 
     for idx, csv in enumerate(list_csvs):
@@ -66,8 +66,12 @@ def process_herg(list_csvs):
             df = pd.concat([df, df_next])
 
     # filter only IC50, nM, = data.
+    condition = (df.Value_type == "IC50") & (df.Unit == "nM")
+    if not keep_operators:
+         condition = condition & (df.Relation == "=")
+
     df = df.loc[
-        (df.Value_type == "IC50") & (df.Unit == "nM") & (df.Relation == "="),
+        condition,
         ["Canonical_smiles", "Value"],
     ]
 
@@ -233,13 +237,13 @@ if __name__ == "__main__":
 
     # hERG public data
     herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
-    process_herg(herg_list)
+    process_herg(herg_list, keep_operators=True)
 
     # caco2 data
-    process_caco2()
+    # process_caco2()
 
-    # ppb data
-    process_ppb()
+    # # ppb data
+    # process_ppb()
 
-    # cyp data
-    process_cyp()
+    # # cyp data
+    # process_cyp()
