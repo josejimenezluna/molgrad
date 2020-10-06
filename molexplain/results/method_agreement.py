@@ -36,9 +36,8 @@ def method_agreement(
 
 
 def plot_agreement(scores):
-    sns.pairplot(scores)    
+    sns.pairplot(scores)
     plt.show()
-
 
 
 if __name__ == "__main__":
@@ -77,7 +76,7 @@ if __name__ == "__main__":
             imp_rf.append(i_rf)
 
         importances[f"{data}_graph"] = imp
-        importances[f'{data}_global'] = g_imp
+        importances[f"{data}_global"] = g_imp
         importances[f"{data}_rf"] = imp_rf
 
     with open(os.path.join(DATA_PATH, "importances.pt"), "wb") as handle:
@@ -90,12 +89,14 @@ if __name__ == "__main__":
         agreement_m = np.zeros((N_VERSIONS + 1, N_VERSIONS + 1), dtype=np.float32)
         imp_mpnn = importances[f"{data}_mpnn"]
         imp_rf = importances[f"{data}_rf"]
-        
+
         for idx_i in range(N_VERSIONS):
             for idx_j in range(N_VERSIONS):
                 if idx_j > idx_i:
-                    agreement_m[idx_i, idx_j] = method_agreement(imp_mpnn[idx_i], imp_mpnn[idx_j])
+                    agreement_m[idx_i, idx_j] = method_agreement(
+                        imp_mpnn[idx_i], imp_mpnn[idx_j]
+                    )
             agreement_m[idx_i, 3] = method_agreement(imp_mpnn[idx_i], imp_rf)
         agreement_m += agreement_m.T.copy()
 
-    agreement_d[f'{data}'] = agreement_m
+    agreement_d[f"{data}"] = agreement_m

@@ -63,9 +63,7 @@ def molecule_importance_diff(
         atom_importance -= mean
         atom_importance /= std
 
-    highlightAtomColors = determine_atom_col(
-        mol, atom_importance, bond_importance=None, version=0
-    )
+    highlightAtomColors = determine_atom_col(mol, atom_importance)
     highlightAtoms = list(highlightAtomColors.keys())
 
     highlightBondColors = determine_bond_col(highlightAtomColors, mol)
