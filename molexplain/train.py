@@ -26,10 +26,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = multiprocessing.cpu_count()
 
 TASK_GUIDE = {
-    # "ppb": "regression",
-    # "caco2": "regression",
+    "ppb": "regression",
+    "caco2": "regression",
     "herg": "regression",
-    # "cyp": "binary",
+    "cyp": "binary",
 }
 rmse = lambda x, y: np.sqrt(np.mean((x - y) ** 2))
 
