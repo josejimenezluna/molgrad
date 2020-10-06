@@ -240,10 +240,10 @@ if __name__ == "__main__":
     process_herg(herg_list, keep_operators=True)
 
     # caco2 data
-    # process_caco2()
+    process_caco2()
 
-    # # ppb data
-    # process_ppb()
+    # ppb data
+    process_ppb()
 
-    # # cyp data
-    # process_cyp()
+    # cyp data
+    process_cyp()

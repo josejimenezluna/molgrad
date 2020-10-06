@@ -168,7 +168,6 @@ if __name__ == "__main__":
         else:
             raise ValueError("Task not supported")
 
-        # public training
         with open(os.path.join(DATA_PATH, f"{data}", f"data_{data}.pt"), "rb") as handle:
             inchis, values = pickle.load(handle)
 
