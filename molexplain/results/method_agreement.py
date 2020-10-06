@@ -47,6 +47,7 @@ if __name__ == "__main__":
     for data in TASK_GUIDE.keys():
         print(f"Now computing importances for dataset {data}...")
         imp = [[] for _ in range(N_VERSIONS)]
+        g_imp = [[] for _ in range(N_VERSIONS)]
         imp_rf = []
 
         model_pt = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
@@ -66,16 +67,18 @@ if __name__ == "__main__":
         for inchi in tqdm(inchis):
             mol = MolFromInchi(inchi)
             for version in range(1, N_VERSIONS + 1):
-                _, _, atom_importance, _, _ = molecule_importance(
+                _, _, atom_importance, _, global_importance = molecule_importance(
                     mol, model, version=version
                 )
                 imp[version - 1].append(atom_importance)
+                g_imp[version - 1].append(global_importance)
 
             _, _, i_rf = molecule_importance_diff(mol, model_rf)
             imp_rf.append(i_rf)
 
         importances[f"{data}_mpnn"] = imp
+        importances[f'{data}_global'] = g_imp
         importances[f"{data}_rf"] = imp_rf
 
-    with open(os.path.join(DATA_PATH, f'{data}', f"importances.pt"), "wb") as handle:
+    with open(os.path.join(DATA_PATH, "importances.pt"), "wb") as handle:
         pickle.dump(importances, handle)
