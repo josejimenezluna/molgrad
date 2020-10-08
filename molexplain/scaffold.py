@@ -8,6 +8,7 @@ from rdkit.Chem.AllChem import GetMorganFingerprint
 from rdkit.Chem.inchi import MolFromInchi
 from rdkit.DataStructs import TanimotoSimilarity
 
+from molexplain.train import TASK_GUIDE
 from molexplain.utils import DATA_PATH, MODELS_PATH
 from molexplain.prod import predict
 
@@ -91,34 +92,39 @@ def diff_matrix(values):
 
 
 if __name__ == "__main__":
-    with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "rb") as handle:
-        inchis, values = pickle.load(handle)
+    for data in TASK_GUIDE.keys():
+        with open(os.path.join(DATA_PATH, f"{data}", f"data_{data}.pt"), "rb") as handle:
+            inchis, values = pickle.load(handle)
 
-    # Chemical similarity between ligands
-    sims = sim_matrix(inchis)
+        # Chemical similarity between ligands
+        sims = sim_matrix(inchis)
 
-    with open(os.path.join(DATA_PATH, "cyp", "sim_cyp.pt"), "wb") as handle:
-        pickle.dump(sims, handle)
+        with open(os.path.join(DATA_PATH, f"{data}", f"sim_{data}.pt"), "wb") as handle:
+            pickle.dump(sims, handle)
 
-    # Experimental difference
-    diff_exp = diff_matrix(values)
-    np.save(os.path.join(DATA_PATH, "cyp", "diff_exp.npy"), arr=diff_exp)
+        # Experimental difference
+        diff_exp = diff_matrix(values)
+        np.save(os.path.join(DATA_PATH, f"{data}", "diff_exp.npy"), arr=diff_exp)
 
-    # Predicted difference
-    w_path = os.path.join(MODELS_PATH, "cyp_noHs.pt")
-    preds = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
+        # Predicted difference
+        w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
+        preds = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
 
-    print("Test R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
+        print("Test R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
 
-    diff_hat = diff_matrix(preds)
-    np.save(os.path.join(DATA_PATH, "cyp", "diff_hat.npy"), arr=diff_hat)
+        diff_hat = diff_matrix(preds)
+        np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat.npy"), arr=diff_hat)
 
-    #
+        #
+        if data == "cyp":
+            output_f = torch.sigmoid
+        else:
+            output_f = None
 
-    w_path = os.path.join(MODELS_PATH, "cyp_noHs_notest.pt")
-    preds_notest = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
+        w_path = os.path.join(MODELS_PATH, f"{data}_noHs_notest.pt")
+        preds_notest = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
 
-    print("Training R: {:.3f}".format(np.corrcoef(values, preds_notest)[0, 1]))
+        print("Training R: {:.3f}".format(np.corrcoef(values, preds_notest)[0, 1]))
 
-    diff_hat_notest = diff_matrix(preds_notest)
-    np.save(os.path.join(DATA_PATH, "cyp", "diff_hat_notest.npy"), arr=diff_hat_notest)
+        diff_hat_notest = diff_matrix(preds_notest)
+        np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat_notest.npy"), arr=diff_hat_notest)
