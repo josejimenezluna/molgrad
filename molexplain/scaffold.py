@@ -121,7 +121,7 @@ if __name__ == "__main__":
         else:
             output_f = None
 
-        w_path = os.path.join(MODELS_PATH, f"{data}_noHs_notest.pt")
+        w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
         preds_notest = predict(inchis, w_path, output_f=output_f).squeeze()
 
         print("Training R: {:.3f}".format(np.corrcoef(values, preds_notest)[0, 1]))
