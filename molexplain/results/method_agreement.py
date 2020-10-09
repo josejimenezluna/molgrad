@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     for data in TASK_GUIDE.keys():
         agreement_m = np.zeros((N_VERSIONS + 1, N_VERSIONS + 1), dtype=np.float32)
-        imp_mpnn = importances[f"{data}_mpnn"]
+        imp_mpnn = importances[f"{data}_graph"]
         imp_rf = importances[f"{data}_rf"]
 
         for idx_i in range(N_VERSIONS):
@@ -96,7 +96,7 @@ if __name__ == "__main__":
                     agreement_m[idx_i, idx_j] = method_agreement(
                         imp_mpnn[idx_i], imp_mpnn[idx_j]
                     )
-            agreement_m[idx_i, 3] = method_agreement(imp_mpnn[idx_i], imp_rf)
+            agreement_m[idx_i, N_VERSIONS] = method_agreement(imp_mpnn[idx_i], imp_rf)
         agreement_m += agreement_m.T.copy()
 
     agreement_d[f"{data}"] = agreement_m
