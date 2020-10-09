@@ -115,11 +115,9 @@ if __name__ == "__main__":
         # Predicted difference
         w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
         preds = predict(inchis, w_path, output_f=output_f).squeeze()
+        np.save(os.path.join(DATA_PATH, f"{data}", "preds.npy"), arr=preds)
 
         print("R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
 
         diff_hat = diff_matrix(preds)
         np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat.npy"), arr=diff_hat)
-
-        w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
-        preds_notest = predict(inchis, w_path, output_f=output_f).squeeze()
