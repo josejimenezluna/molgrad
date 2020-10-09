@@ -96,6 +96,12 @@ if __name__ == "__main__":
         with open(os.path.join(DATA_PATH, f"{data}", f"data_{data}.pt"), "rb") as handle:
             inchis, values = pickle.load(handle)
 
+        # Only CYP requires sigmoid act. function 
+        if data == "cyp":
+            output_f = torch.sigmoid
+        else:
+            output_f = None
+
         # Chemical similarity between ligands
         sims = sim_matrix(inchis)
 
@@ -108,23 +114,12 @@ if __name__ == "__main__":
 
         # Predicted difference
         w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
-        preds = predict(inchis, w_path, output_f=torch.sigmoid).squeeze()
+        preds = predict(inchis, w_path, output_f=output_f).squeeze()
 
-        print("Test R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
+        print("R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
 
         diff_hat = diff_matrix(preds)
         np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat.npy"), arr=diff_hat)
 
-        #
-        if data == "cyp":
-            output_f = torch.sigmoid
-        else:
-            output_f = None
-
         w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
         preds_notest = predict(inchis, w_path, output_f=output_f).squeeze()
-
-        print("Training R: {:.3f}".format(np.corrcoef(values, preds_notest)[0, 1]))
-
-        diff_hat_notest = diff_matrix(preds_notest)
-        np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat_notest.npy"), arr=diff_hat_notest)
