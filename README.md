@@ -28,5 +28,6 @@ Download baseline Sheridan et al. (2019) random forests models:
 
 ```
 wget https://polybox.ethz.ch/index.php/s/xVa0wX5qnKlTi2J/download -O baseline_models.tar.gz
+tar -xf baseline_models.tar.gz
 
 ```
