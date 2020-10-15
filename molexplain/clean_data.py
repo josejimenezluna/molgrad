@@ -156,11 +156,14 @@ def process_ppb():
     for mol_name, val in tqdm(zip(df6["Compound"], df6["fb (%)b"]), total=len(df6)):
         ans = requests.get(IUPAC_REST.format(mol_name))
         if ans.status_code == 200:
-            inchi = ans.content.decode("utf8")
+            inchi = ans.content.decode("utf8")  # maybe not the same standard as rdkit...
             mol = MolFromInchi(inchi)
             if mol is not None:
-                inchis.append(inchi)
-                values.append(val)
+                new_inchi = MolToInchi(mol)
+                new_mol = MolFromInchi(new_inchi)
+                if new_mol is not None:
+                    inchis.append(new_inchi)
+                    values.append(val)
 
     # join them all together
     df = pd.DataFrame({"inchi": inchis, "values": values})
@@ -236,14 +239,14 @@ if __name__ == "__main__":
     os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
 
     # hERG public data
-    herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
-    process_herg(herg_list, keep_operators=True)
+    # herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
+    # process_herg(herg_list, keep_operators=True)
 
-    # caco2 data
-    process_caco2()
+    # # caco2 data
+    # process_caco2()
 
     # ppb data
     process_ppb()
 
     # cyp data
-    process_cyp()
+    # process_cyp()
