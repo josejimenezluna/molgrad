@@ -15,6 +15,7 @@ def molecule_importance_diff(
     fp_size=1024,
     bond_radius=2,
     dummy_atom_no=47,
+    eps=1,
     vis_factor=0.1,
     normalize=False,
     img_width=400,
@@ -63,7 +64,7 @@ def molecule_importance_diff(
         atom_importance -= mean
         atom_importance /= std
 
-    highlightAtomColors = determine_atom_col(mol, atom_importance)
+    highlightAtomColors = determine_atom_col(mol, atom_importance, eps=eps)
     highlightAtoms = list(highlightAtomColors.keys())
 
     highlightBondColors = determine_bond_col(highlightAtomColors, mol)
