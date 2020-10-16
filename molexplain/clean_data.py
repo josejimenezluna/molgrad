@@ -68,11 +68,10 @@ def process_herg(list_csvs, keep_operators=True):
     # filter only IC50, nM, = data.
     condition = (df.Value_type == "IC50") & (df.Unit == "nM")
     if not keep_operators:
-         condition = condition & (df.Relation == "=")
+        condition = condition & (df.Relation == "=")
 
     df = df.loc[
-        condition,
-        ["Canonical_smiles", "Value"],
+        condition, ["Canonical_smiles", "Value"],
     ]
 
     df.Value = -np.log10(df.Value * 1e-9)  # pIC50 conversion
@@ -156,7 +155,9 @@ def process_ppb():
     for mol_name, val in tqdm(zip(df6["Compound"], df6["fb (%)b"]), total=len(df6)):
         ans = requests.get(IUPAC_REST.format(mol_name))
         if ans.status_code == 200:
-            inchi = ans.content.decode("utf8")  # maybe not the same standard as rdkit...
+            inchi = ans.content.decode(
+                "utf8"
+            )  # maybe not the same standard as rdkit...
             mol = MolFromInchi(inchi)
             if mol is not None:
                 new_inchi = MolToInchi(mol)
@@ -185,6 +186,17 @@ def process_caco2():
     df1.dropna(inplace=True)
     df1["Value"] = -np.log10(df1["Caco-2 Papp * 10^6 cm/s"] * 1e-6)
 
+    new_inchis = []
+    values = []
+
+    for inchi, val in zip(df1["InChI"], df1["Value"]):
+        mol = MolFromInchi(inchi)
+        if mol is not None:
+            new_inchis.append(MolToInchi(mol))  # ensure same inchi specification
+            values.append(val)
+
+    df1 = pd.DataFrame({"InChI": new_inchis, "Value": values})
+
     # plos one data
     df2 = pd.read_csv(os.path.join(DATA_PATH, "caco2", "caco2perm_pone.csv"))
     df2["Value"] = -np.log10(df2["Papp (Caco-2) [cm/s]"])
@@ -199,8 +211,11 @@ def process_caco2():
         ans = requests.get(IUPAC_REST.format(mol_name))
         if ans.status_code == 200:
             inchi = ans.content.decode("utf8")
-            inchis.append(inchi)
-            values.append(val)
+            new_mol = MolFromInchi(inchi)  # ensure same inchi specification
+            if new_mol is not None:
+                new_inchi = MolToInchi(new_mol)
+                inchis.append(new_inchi)
+                values.append(val)
 
     inchis.extend(df1["InChI"].tolist())
     values.extend(df1["Value"].tolist())
@@ -239,14 +254,14 @@ if __name__ == "__main__":
     os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
 
     # hERG public data
-    # herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
-    # process_herg(herg_list, keep_operators=True)
+    herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
+    process_herg(herg_list, keep_operators=True)
 
-    # # caco2 data
-    # process_caco2()
+    # caco2 data
+    process_caco2()
 
     # ppb data
     process_ppb()
 
     # cyp data
-    # process_cyp()
+    process_cyp()
