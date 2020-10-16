@@ -54,7 +54,7 @@ def predict(inchis, w_path, n_tasks=1, batch_size=32, output_f=None, progress=Tr
         global_feats=g_dim,
         n_tasks=n_tasks,
         num_step_message_passing=N_MESSPASS,
-        output_f=None,
+        output_f=output_f,
     ).to(DEVICE)
 
     model.load_state_dict(torch.load(w_path, map_location=DEVICE))
@@ -68,6 +68,4 @@ def predict(inchis, w_path, n_tasks=1, batch_size=32, output_f=None, progress=Tr
             out = model(g, g_feat)
             yhats.append(out.cpu())
     preds = torch.cat(yhats)
-    if output_f is not None:
-        preds = output_f(preds)
     return preds.numpy()

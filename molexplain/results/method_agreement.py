@@ -57,8 +57,14 @@ if __name__ == "__main__":
         ) as handle:
             inchis, _ = pickle.load(handle)
 
+        output_f = torch.sigmoid if data == "cyp" else None
+
         model = MPNNPredictor(
-            node_in_feats=49, edge_in_feats=10, global_feats=4, n_tasks=1
+            node_in_feats=49,
+            edge_in_feats=10,
+            global_feats=4,
+            n_tasks=1,
+            output_f=output_f,
         ).to(DEVICE)
 
         model.load_state_dict(torch.load(model_pt, map_location=DEVICE))
@@ -93,10 +99,21 @@ if __name__ == "__main__":
         for idx_i in range(N_VERSIONS):
             for idx_j in range(N_VERSIONS):
                 if idx_j > idx_i:
-                    agreement_m[idx_i, idx_j] = method_agreement(
+                    col_means = []
+                    for aimportances_i, aimportances_j in zip(
                         imp_mpnn[idx_i], imp_mpnn[idx_j]
-                    )
+                    ):
+                        col_means.append(
+                            method_agreement(aimportances_i, aimportances_j)
+                        )
+                    agreement_m[idx_i, idx_j] = np.mean(col_means)
+            col_means = []
+            for aimportances_i, aimportances_rf in zip(imp_mpnn[idx_i], imp_rf):
+                col_means.append(method_agreement(aimportances_i, aimportances_rf))
+
             agreement_m[idx_i, N_VERSIONS] = method_agreement(imp_mpnn[idx_i], imp_rf)
         agreement_m += agreement_m.T.copy()
+        agreement_d[f"{data}"] = agreement_m
 
-    agreement_d[f"{data}"] = agreement_m
+    with open(os.path.join(DATA_PATH, "agreement.pt"), "wb") as handle:
+        pickle.dump(agreement_d, handle)

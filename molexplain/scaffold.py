@@ -69,7 +69,7 @@ def sim_matrix(inchis):
 
 
 def diff_matrix(values):
-    """Computes pairwise difference of values in 
+    """Computes pairwise difference matrix of values 
 
     Parameters
     ----------
