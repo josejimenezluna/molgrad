@@ -111,7 +111,7 @@ if __name__ == "__main__":
             for aimportances_i, aimportances_rf in zip(imp_mpnn[idx_i], imp_rf):
                 col_means.append(method_agreement(aimportances_i, aimportances_rf))
 
-            agreement_m[idx_i, N_VERSIONS] = method_agreement(imp_mpnn[idx_i], imp_rf)
+            agreement_m[idx_i, N_VERSIONS] = np.mean(col_means)
         agreement_m += agreement_m.T.copy()
         agreement_d[f"{data}"] = agreement_m
 
