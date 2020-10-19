@@ -11,7 +11,7 @@ Download publicly available data:
 
 ```bash
 cd molexplain
-wget https://polybox.ethz.ch/index.php/s/m1xwgbyPz4uHwYS/download -O data.tar.gz
+wget https://polybox.ethz.ch/index.php/s/K0orABbeJmwOUEh/download -O data.tar.gz
 tar -xf data.tar.gz
 
 ```
