@@ -12,6 +12,7 @@ from molexplain.vis import determine_atom_col, determine_bond_col
 def molecule_importance_diff(
     mol,
     model,
+    task="regression",
     fp_size=1024,
     bond_radius=2,
     dummy_atom_no=47,
@@ -57,7 +58,9 @@ def molecule_importance_diff(
     if addHs:
         mol = AddHs(mol)
 
-    atom_importance = diff_importance(mol, model, fp_size, bond_radius, dummy_atom_no)
+    atom_importance = diff_importance(
+        mol, model, task, fp_size, bond_radius, dummy_atom_no
+    )
 
     if normalize:
         mean, std = np.mean(atom_importance), np.std(atom_importance)

@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 imp[version - 1].append(atom_importance)
                 g_imp[version - 1].append(global_importance)
 
-            _, _, i_rf = molecule_importance_diff(mol, model_rf)
+            _, _, i_rf = molecule_importance_diff(mol, model_rf, task=TASK_GUIDE[data])
             imp_rf.append(i_rf)
 
         importances[f"{data}_graph"] = imp
@@ -113,6 +113,7 @@ if __name__ == "__main__":
 
             agreement_m[idx_i, N_VERSIONS] = np.mean(col_means)
         agreement_m += agreement_m.T.copy()
+        agreement_m += np.eye(N_VERSIONS + 1)
         agreement_d[f"{data}"] = agreement_m
 
     with open(os.path.join(DATA_PATH, "agreement.pt"), "wb") as handle:

@@ -50,7 +50,9 @@ def featurize_ecfp4(mol, fp_size=1024, bond_radius=2):
     return arr
 
 
-def diff_importance(mol, model, fp_size=1024, bond_radius=2, dummy_atom_no=47):
+def diff_importance(
+    mol, model, task="regression", fp_size=1024, bond_radius=2, dummy_atom_no=47
+):
     """Returns atom importance based on dummy substitutions
 
     Parameters
@@ -68,7 +70,11 @@ def diff_importance(mol, model, fp_size=1024, bond_radius=2, dummy_atom_no=47):
         Atom importances
     """
     og_fp = featurize_ecfp4(mol, fp_size, bond_radius)
-    og_pred = model.predict(og_fp[np.newaxis, :])
+
+    if task == "regression":
+        og_pred = model.predict(og_fp[np.newaxis, :])
+    elif task == "binary":
+        og_pred = model.predict_proba(og_fp[np.newaxis, :])
 
     mod_mols = gen_dummy_atoms(mol, dummy_atom_no)
 
