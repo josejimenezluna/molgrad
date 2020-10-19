@@ -235,7 +235,6 @@ if __name__ == "__main__":
                 )
 
             # Save model, predictions and training losses
-
             os.makedirs(MODELS_PATH, exist_ok=True)
             torch.save(
                 model.state_dict(),
