@@ -1,11 +1,12 @@
 import os
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from molexplain.net import MPNNPredictor
-from molexplain.net_utils import GraphData, collate_pair_prod
+from molexplain.net_utils import GraphData, collate_pair_prod, mol_to_dgl, get_global_features
 from molexplain.train import DEVICE, NUM_WORKERS, N_MESSPASS
 
 
@@ -70,3 +71,11 @@ def predict(
             out = model(g, g_feat)
             yhats.append(out.cpu())
     return torch.cat(yhats)
+
+
+def predict_mol(mol, model):
+    pred = model(
+        mol_to_dgl(mol).to(DEVICE),
+        torch.Tensor(get_global_features(mol)[np.newaxis, :]).cuda(),
+    )
+    return pred[0]
