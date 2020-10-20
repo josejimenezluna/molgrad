@@ -43,15 +43,15 @@ if __name__ == "__main__":
         values = np.array(values)[:, np.newaxis]
         mask = np.array([True for l in range(values.shape[0])])[:, np.newaxis]
 
-        data = GraphData(inchis, values, mask, add_hs=False)
+        data_train = GraphData(inchis, values, mask, add_hs=False)
 
-        sample_item = data[0]
+        sample_item = data_train[0]
         a_dim = sample_item[0].ndata["feat"].shape[1]
         e_dim = sample_item[0].edata["feat"].shape[1]
         g_dim = len(sample_item[1])
 
         loader_train = DataLoader(
-            data,
+            data_train,
             batch_size=BATCH_SIZE,
             shuffle=True,
             collate_fn=collate_pair,
