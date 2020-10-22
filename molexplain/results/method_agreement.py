@@ -2,8 +2,6 @@ import os
 import pickle
 
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from joblib import load
 import torch
 from rdkit.Chem.inchi import MolFromInchi
@@ -34,10 +32,6 @@ def method_agreement(
         col_mean = np.mean([col_mean, bmean])
     return col_mean
 
-
-def plot_agreement(scores):
-    sns.pairplot(scores)
-    plt.show()
 
 
 if __name__ == "__main__":
