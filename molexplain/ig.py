@@ -118,29 +118,3 @@ def integrated_gradients(graph, g_feat, model, task=0, n_steps=50, version=2):
     )
 
 
-# if __name__ == "__main__":
-#     from rdkit.Chem import MolFromSmiles
-#     smiles = "CCO"
-#     from molexplain.net_utils import mol_to_dgl, get_global_features
-#     from molexplain.utils import MODELS_PATH
-
-#     mol = MolFromSmiles(smiles)
-#     graph = mol_to_dgl(mol)
-#     g_feat = get_global_features(mol)
-
-
-#     import torch
-#     model_pt = os.path.join(MODELS_PATH, 'cyp_noHs.pt')
-
-#     from molexplain.net import MPNNPredictor
-
-#     model = MPNNPredictor(node_in_feats=49,
-#                         edge_in_feats=10,
-#                         global_feats=4,
-#                         n_tasks=1,
-#                         output_f=torch.sigmoid).to(DEVICE)
-#     model.load_state_dict(torch.load(model_pt,
-#                                     map_location=DEVICE))
-
-#     svg,
-
