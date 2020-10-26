@@ -72,13 +72,15 @@ def diff_importance(
     og_fp = featurize_ecfp4(mol, fp_size, bond_radius)
 
     if task == "regression":
-        og_pred = model.predict(og_fp[np.newaxis, :])
+        pred_fun = lambda x: model.predict(x)
     elif task == "binary":
-        og_pred = model.predict_proba(og_fp[np.newaxis, :])
+        pred_fun = lambda x: model.predict_proba(x)[:, 1]
+
+    og_pred = pred_fun(og_fp[np.newaxis, :])
 
     mod_mols = gen_dummy_atoms(mol, dummy_atom_no)
 
     mod_fps = [featurize_ecfp4(mol) for mol in mod_mols]
     mod_fps = np.vstack(mod_fps)
-    mod_preds = model.predict(mod_fps)
+    mod_preds = pred_fun(mod_fps)
     return og_pred - mod_preds
