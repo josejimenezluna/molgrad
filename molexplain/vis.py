@@ -81,6 +81,7 @@ def molecule_importance(
     version=2,
     eps=1e-4,
     vis_factor=1.0,
+    feature_scale=True,
     img_width=400,
     img_height=200,
     addHs=False,
@@ -108,6 +109,8 @@ def molecule_importance(
     vis_factor : float, optional
         value that is multiplied to the atom importances for visualization
         purposes, by default 1.0
+    feature_scale: bool, optional
+        whether to scale the resulting gradients by the original features
     img_width, img_height: int, optional
         Size of the generated SVG in px, by default 400, 200
     addHs : bool, optional
@@ -131,7 +134,13 @@ def molecule_importance(
     graph = mol_to_dgl(mol)
     g_feat = get_global_features(mol)
     atom_importance, bond_importance, global_importance = integrated_gradients(
-        graph, g_feat, model, task=task, n_steps=n_steps, version=version
+        graph,
+        g_feat,
+        model,
+        task=task,
+        n_steps=n_steps,
+        version=version,
+        feature_scale=feature_scale,
     )
 
     # bond importances gets distributed across atoms if version > 1

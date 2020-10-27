@@ -68,7 +68,9 @@ def gen_steps(graph, g_feat, n_steps, version=2):
 #     return graphs
 
 
-def integrated_gradients(graph, g_feat, model, task=0, n_steps=50, version=2):
+def integrated_gradients(
+    graph, g_feat, model, task=0, n_steps=50, version=2, feature_scale=True
+):
     """Computes path integral of the node features of `graph` for a
     specific `task` number, using a Monte Carlo approx. of `n_steps`. 
 
@@ -108,13 +110,18 @@ def integrated_gradients(graph, g_feat, model, task=0, n_steps=50, version=2):
         values_bond.append(bond_grads)
         values_global.append(gf.grad)
 
-    cat_atom = torch.cat(values_atom, dim=2).mean(dim=2).cpu() * graph.ndata["feat"]
-    cat_bond = torch.cat(values_bond, dim=2).mean(dim=2).cpu() * graph.edata["feat"]
-    cat_global = torch.cat(values_global).mean(dim=0).cpu() * g_feat
+    cat_atom = torch.cat(values_atom, dim=2).mean(dim=2).cpu()
+    cat_bond = torch.cat(values_bond, dim=2).mean(dim=2).cpu()
+    cat_global = torch.cat(values_global).mean(dim=0).cpu()
+
+    if feature_scale:
+        cat_atom *= graph.ndata["feat"]
+        cat_bond *= graph.edata["feat"]
+        cat_global *= g_feat
+
     return (
         cat_atom.mean(dim=1).numpy(),
         cat_bond.mean(dim=1).numpy(),
         cat_global.numpy(),
     )
-
 

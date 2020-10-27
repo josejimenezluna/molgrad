@@ -21,7 +21,7 @@ plt.rcParams.update(
 
 LABEL_GUIDE = {
     "ppb": r"$F_b(\%)$",
-    "caco2": r"$P_\mathrm{app}$",
+    "caco2": r"$-\log_{10} P_\mathrm{app}$ (cm/s)",
     "herg": r"$p\mathrm{IC}_{50}$",
 }
 
@@ -62,8 +62,8 @@ if __name__ == "__main__":
         )
 
         axs[idx_plot].scatter(y_test, y_hat, s=1.7)
-        axs[idx_plot].set_ylabel(f"Predicted {LABEL_GUIDE[data]}")
-        axs[idx_plot].set_xlabel(f"Experimental {LABEL_GUIDE[data]}")
+        axs[idx_plot].set_ylabel(f"Pred. {LABEL_GUIDE[data]}")
+        axs[idx_plot].set_xlabel(f"Exp. {LABEL_GUIDE[data]}")
         axs[idx_plot].grid(alpha=0.5)
 
     # cyp values
@@ -93,8 +93,8 @@ if __name__ == "__main__":
     axs[3].plot(fpr, tpr, lw=1)
     axs[3].plot([0, 1], [0, 1], color="grey", linestyle="--")
     axs[3].grid(alpha=0.5)
-    axs[3].set_xlabel("Specificity (CYP inhibition)")
-    axs[3].set_ylabel("Sensitivity (CYP inhibition)")
+    axs[3].set_xlabel("Specificity (CYP3A4 inhibition)")
+    axs[3].set_ylabel("Sensitivity (CYP3A4 inhibition)")
 
     plt.tight_layout()
     plt.savefig(os.path.join(FIG_PATH, "graph_performance.pdf"))
