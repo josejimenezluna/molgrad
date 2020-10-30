@@ -164,7 +164,7 @@ def molecule_importance(
         k: np.abs(v) * vis_factor for k, v in enumerate(atom_importance)
     }
 
-    rdDepictor.Compute2DCoords(mol)
+    rdDepictor.Compute2DCoords(mol, canonOrient=True)
     drawer = rdMolDraw2D.MolDraw2DSVG(img_width, img_height)
     drawer.DrawMolecule(
         mol,

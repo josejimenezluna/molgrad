@@ -33,6 +33,8 @@ LABEL_GUIDE = {
 }
 
 
+DATASET_GUIDE = {"ppb": "PPB", "caco2": "Caco-2", "herg": "hERG", "cyp": "CYP3A4"}
+
 # Boxplot with descriptive values for all molecules
 
 if __name__ == "__main__":
@@ -53,12 +55,12 @@ if __name__ == "__main__":
             mws.append(MolWt(mol))
             logps.append(MolLogP(mol))
             nhdonors.append(NumHDonors(mol))
-            dataset.append(data)
+            dataset.append(DATASET_GUIDE[data])
 
     df = pd.DataFrame(
         {
             "Molecular weight (Da)": mws,
-            "cLogP": logps,
+            r"cLog$P$": logps,
             "No. hydrogen donors": nhdonors,
             "values": values,
             "dataset": dataset,
@@ -80,7 +82,7 @@ if __name__ == "__main__":
         palette="Set2",
     )
     sns.boxplot(
-        y="cLogP", x="dataset", data=df, ax=axs[1], showfliers=False, palette="Set2"
+        y=r"cLog$P$", x="dataset", data=df, ax=axs[1], showfliers=False, palette="Set2"
     )
     sns.boxplot(
         y="No. hydrogen donors",
