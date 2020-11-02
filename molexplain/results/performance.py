@@ -3,6 +3,7 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import kde
 from sklearn.metrics import roc_auc_score, roc_curve
 
 from molexplain.train import N_FOLDS, rmse
@@ -22,7 +23,7 @@ plt.rcParams.update(
 LABEL_GUIDE = {
     "ppb": r"$F_b(\%)$",
     "caco2": r"$-\log_{10} P_\mathrm{app}$ (cm/s)",
-    "herg": r"$p\mathrm{IC}_{50}$",
+    "herg": r"$p\mathrm{IC}_{50}$ (hERG)",
 }
 
 sigmoid = lambda x: 1 / (1 + np.exp(-x))
@@ -61,7 +62,25 @@ if __name__ == "__main__":
             )
         )
 
-        axs[idx_plot].scatter(y_test, y_hat, s=1.7)
+        y_test = np.array(y_test)
+        y_hat = np.array(y_hat)
+
+        # axs[idx_plot].scatter(y_test, y_hat, s=1.7)
+        nbins = 300
+        k = kde.gaussian_kde([y_test, y_hat])
+        xi, yi = np.mgrid[
+            y_test.min() : y_test.max() : nbins * 1j,
+            y_hat.min() : y_hat.max() : nbins * 1j,
+        ]
+        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+        im = axs[idx_plot].pcolormesh(xi, yi, zi.reshape(xi.shape), cmap="cividis")
+        # e = f.colorbar(matplotlib.cm.ScalarMappable(), ax=axs[idx_plot])
+        fmt = matplotlib.ticker.ScalarFormatter()
+        fmt.set_scientific(True)
+        fmt.set_powerlimits((-2, 4))
+        plt.colorbar(im, ax=axs[idx_plot], format=fmt)
+
         axs[idx_plot].set_ylabel(f"Pred. {LABEL_GUIDE[data]}")
         axs[idx_plot].set_xlabel(f"Exp. {LABEL_GUIDE[data]}")
         axs[idx_plot].grid(alpha=0.5)
