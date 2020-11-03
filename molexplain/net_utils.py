@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import rdkit
 import torch
-from rdkit.Chem import GetPeriodicTable
+from rdkit.Chem import GetPeriodicTable, MolFromSmiles
 from rdkit.Chem.Crippen import MolLogP
 from rdkit.Chem.Descriptors import MolWt
 from rdkit.Chem.inchi import MolFromInchi
@@ -196,28 +196,35 @@ def get_global_features(mol):
 
 
 class GraphData(Dataset):
-    def __init__(self, inchi, labels=None, mask=None, train=True, add_hs=True):
+    def __init__(self, strs, labels=None, mask=None, train=True, add_hs=True, inchi=True):
         """Main loading data class
 
         Parameters
         ----------
-        inchi : list
-            A list with inchis
+        strs : list
+            A list with SMILES or InChis
         labels : list
             List of lists containing the tasks 
         mask : [type]
             List of lists containing a boolean mask for missing values.
+        inchi: bool
+            Whether to assume InChis or SMILES as input. Default InChi.
         """
-        self.inchi = inchi
+        self.strs = strs
         self.train = train
         if self.train:
             self.labels = np.array(labels, dtype=np.float32)
             self.mask = np.array(mask, dtype=np.bool)
-            assert len(self.inchi) == len(self.labels)
+            assert len(self.strs) == len(self.labels)
         self.add_hs = add_hs
 
+        if inchi:
+            self.read_mol_f = MolFromInchi
+        else:
+            self.read_mol_f = MolFromSmiles
+
     def __getitem__(self, idx):
-        mol = MolFromInchi(self.inchi[idx])
+        mol = self.read_mol_f(self.strs[idx])
         if self.add_hs:
             mol = AddHs(mol)
         if self.train:
@@ -231,7 +238,7 @@ class GraphData(Dataset):
             return (mol_to_dgl(mol), get_global_features(mol))
 
     def __len__(self):
-        return len(self.inchi)
+        return len(self.strs)
 
 
 def collate_pair(samples):

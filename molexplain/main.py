@@ -1,17 +1,17 @@
-import os
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
 import argparse
 import logging
+import os
 
-from rdkit.Chem import MolFromSmiles
+import numpy as np
+import pandas as pd
 import torch
+from rdkit.Chem import MolFromSmiles
+from tqdm import tqdm
+
 from molexplain.net import MPNNPredictor
 from molexplain.train import DEVICE
-from molexplain.vis import molecule_importance
 from molexplain.utils import MODELS_PATH
-
+from molexplain.vis import molecule_importance
 
 logging.basicConfig(
     level=logging.INFO,
