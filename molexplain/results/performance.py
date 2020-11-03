@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
         axs[idx_plot].set_ylabel(f"Pred. {LABEL_GUIDE[data]}")
         axs[idx_plot].set_xlabel(f"Exp. {LABEL_GUIDE[data]}")
-        axs[idx_plot].grid(alpha=0.5)
+        # axs[idx_plot].grid(alpha=0.5)
 
     # cyp values
 
