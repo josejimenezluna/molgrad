@@ -13,7 +13,7 @@ def gen_dummy_atoms(mol, dummy_atom_no=47):
     ----------
     mol : rdkit.mol
     dummy_atom_no : int, optional
-        Atomic number of the mol to substitute, by default 11
+        Atomic number of the mol to substitute, by default 47
 
     Returns
     -------
@@ -84,3 +84,14 @@ def diff_importance(
     mod_fps = np.vstack(mod_fps)
     mod_preds = pred_fun(mod_fps)
     return og_pred - mod_preds
+
+
+def pred_baseline(mol, model, task="regression", fp_size=1024, bond_radius=2):
+    og_fp = featurize_ecfp4(mol, fp_size, bond_radius)
+
+    if task == "regression":
+        pred_fun = lambda x: model.predict(x)
+    elif task == "binary":
+        pred_fun = lambda x: model.predict_proba(x)[:, 1]
+    
+    return pred_fun(og_fp[np.newaxis, :])

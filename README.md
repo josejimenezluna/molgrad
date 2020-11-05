@@ -1,6 +1,7 @@
 # molexplain
 
-Explainable graph neural network models for property prediction in cheminformatics.
+Supporting code for: Jiménez-Luna _et al_. "MolGrad: coloring molecules using explainable artificial intelligence", available as a preprint in [ChemRxiv](http://...)
+
 
 
 ## Installation
@@ -71,4 +72,24 @@ The trained model can be then used to color molecules via the `main.py` routine 
 
 ```bash
 python molexplain/train_ext.py --help
+```
+
+
+## Data collection for XAI model validation
+
+A comma-separated file with examples drawn from the literature to validate this and other XAI approaches can be downloaded from [here](https://polybox.ethz.ch/index.php/s/olEIsl2fPngzFYS):
+
+
+
+## Citation
+
+If you use this code (or parts thereof), please use the following BibTeX entry:
+
+```
+@article{jimenez2020molgrad,
+  title={MolGrad: coloring molecules using explainable artificial intelligence},
+  author={Jimenez-Luna, Jose and Skalic, Miha and Weskamp, Nils and Schneider, Gisbert},
+  journal={(preprint)},
+}
+
 ```
