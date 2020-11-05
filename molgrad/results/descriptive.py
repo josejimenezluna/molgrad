@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(
         {
-            "Molecular weight (Da)": mws,
+            "Molecular weight (gr./mol)": mws,
             r"cLog$P$": logps,
             "No. hydrogen donors": nhdonors,
             "values": values,
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     axs[2].grid(alpha=0.5)
 
     sns.boxplot(
-        y="Molecular weight (Da)",
+        y="Molecular weight (gr./mol)",
         x="dataset",
         data=df,
         ax=axs[0],
