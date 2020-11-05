@@ -33,7 +33,7 @@ logging.basicConfig(
     format="%(asctime)s || %(name)s | %(levelname)s: %(message)s",
     datefmt="%Y/%m/%d %I:%M:%S %p",
 )
-LOGGER = logging.getLogger("XAIGraphMol_train")
+LOGGER = logging.getLogger("molgrad_train")
 
 
 

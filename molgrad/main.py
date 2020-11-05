@@ -18,7 +18,7 @@ logging.basicConfig(
     format="%(asctime)s || %(name)s | %(levelname)s: %(message)s",
     datefmt="%Y/%m/%d %I:%M:%S %p",
 )
-LOGGER = logging.getLogger("XAIGraphMol")
+LOGGER = logging.getLogger("molgrad")
 
 
 if __name__ == "__main__":
