@@ -1,4 +1,4 @@
-# molexplain
+# molgrad
 
 Supporting code for: Jiménez-Luna _et al_. "MolGrad: coloring molecules using explainable artificial intelligence", available as a preprint in [ChemRxiv](http://...)
 
@@ -22,7 +22,7 @@ tar -xf models.tar.gz
 Then activate the environment and prepend the folder to your PYTHONPATH environment variable:
 
 ```bash
-conda activate molexplain
+conda activate molgrad
 export PYTHONPATH=/path_to_repo_root/:$PYTHONPATH
 ```
 
@@ -41,14 +41,14 @@ tar -xf data.tar.gz
 In order to generate explanations for a particular molecule, given a trained model, one only needs to call the `main.py` script. A CUDA-capable GPU is encouraged, but not required:
 
 ```bash
-python molexplain/main.py -model_path model_weights.pt -smi SMILES -output_f RESULT_DIR
+python molgrad/main.py -model_path model_weights.pt -smi SMILES -output_f RESULT_DIR
 ```
 
 
 For instance, if we wanted to obtain feature colorings for nicotine for the hERG inhibition pre-trained endpoint, and store it under a home subfolder named `results`, one would do:
 
 ```bash
-python molexplain/main.py -model_path molexplain/models/hERG_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
+python molgrad/main.py -model_path molgrad/models/hERG_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
 ```
 
 This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (i.e. molecular weight, logp, tpsa and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
@@ -56,7 +56,7 @@ This will create a comma-separated file `global.csv` in that folder, with featur
 Further parameters (such as feeding an entire .smi) for batch prediction and coloring can be checked via the provided help:
 
 ```
-python molexplain/main.py --help
+python molgrad/main.py --help
 ```
 
 ## (Optional) Train your own models:
@@ -65,13 +65,13 @@ The current framework also provides functionality for model training using custo
 
 
 ```bash
-python molexplain/train_ext.py -data CSV_FILE -smiles_col "SMILES_COL" -target_col "TARGET_COL" -output path_to_weights.pt
+python molgrad/train_ext.py -data CSV_FILE -smiles_col "SMILES_COL" -target_col "TARGET_COL" -output path_to_weights.pt
 ```
 
 The trained model can be then used to color molecules via the `main.py` routine as described above. Additional training options can be consulted with:
 
 ```bash
-python molexplain/train_ext.py --help
+python molgrad/train_ext.py --help
 ```
 
 

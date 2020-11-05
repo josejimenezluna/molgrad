@@ -1,4 +1,4 @@
-name: molexplain
+name: molgrad
 channels:
   - rdkit
   - pytorch
