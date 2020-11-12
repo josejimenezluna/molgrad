@@ -77,7 +77,7 @@ python molgrad/train_ext.py --help
 
 ## Data collection for XAI model validation
 
-A comma-separated file with examples drawn from the literature to validate this and other XAI approaches can be downloaded from [here](https://polybox.ethz.ch/index.php/s/olEIsl2fPngzFYS):
+A comma-separated file with examples drawn from the literature to validate this and other XAI approaches can be downloaded from [here](https://polybox.ethz.ch/index.php/s/olEIsl2fPngzFYS).
 
 
 
