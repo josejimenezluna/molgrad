@@ -60,7 +60,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(
         {
             "Molecular weight (gr./mol)": mws,
-            r"cLog$P$": logps,
+            r"aLog$P$": logps,
             "No. hydrogen donors": nhdonors,
             "values": values,
             "dataset": dataset,
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         palette="Set2",
     )
     sns.boxplot(
-        y=r"cLog$P$", x="dataset", data=df, ax=axs[1], showfliers=False, palette="Set2"
+        y=r"aLog$P$", x="dataset", data=df, ax=axs[1], showfliers=False, palette="Set2"
     )
     sns.boxplot(
         y="No. hydrogen donors",

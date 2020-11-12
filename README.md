@@ -6,7 +6,7 @@ Supporting code for: Jiménez-Luna _et al_. "MolGrad: coloring molecules using e
 
 ## Installation
 
-The recommended method of usage is via the Anaconda Python distribution. One can use the provided conda environment in the repository (assumes CUDA10.1 or greater compatible driver is available):
+The recommended method of usage is via the Anaconda Python distribution. One can use the provided conda environment in the repository (should work for most *nix systems):
 
 ```bash
 conda env create -f environment.yml
