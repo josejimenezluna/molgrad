@@ -1,6 +1,6 @@
 # molgrad
 
-Supporting code for: Jiménez-Luna _et al_. "MolGrad: coloring molecules using explainable artificial intelligence", available as a preprint in [ChemRxiv](http://...)
+Supporting code for: Jiménez-Luna _et al_. "Coloring molecules with explainable artificial intelligence for preclinical relevance assessment", available as a preprint in [ChemRxiv](http://...)
 
 
 
