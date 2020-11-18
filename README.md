@@ -87,7 +87,7 @@ If you use this code (or parts thereof), please use the following BibTeX entry:
 
 ```
 @article{jimenez2020molgrad,
-  title={MolGrad: coloring molecules using explainable artificial intelligence},
+  title={Coloring molecules with explainable artificial intelligence for preclinical relevance assessment},
   author={Jimenez-Luna, Jose and Skalic, Miha and Weskamp, Nils and Schneider, Gisbert},
   journal={(preprint)},
 }
