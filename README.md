@@ -1,6 +1,6 @@
 # molgrad
 
-Supporting code for: Jiménez-Luna _et al_. "Coloring molecules with explainable artificial intelligence for preclinical relevance assessment", available as a preprint in [ChemRxiv](http://...)
+Supporting code for: Jiménez-Luna _et al_. "Coloring molecules with explainable artificial intelligence for preclinical relevance assessment", available as a preprint in [ChemRxiv](https://chemrxiv.org/articles/preprint/Coloring_Molecules_with_Explainable_Artificial_Intelligence_for_Preclinical_Relevance_Assessment/13252286)
 
 
 
@@ -86,10 +86,13 @@ A comma-separated file with examples drawn from the literature to validate this 
 If you use this code (or parts thereof), please use the following BibTeX entry:
 
 ```
-@article{jimenez2020molgrad,
-  title={Coloring molecules with explainable artificial intelligence for preclinical relevance assessment},
-  author={Jimenez-Luna, Jose and Skalic, Miha and Weskamp, Nils and Schneider, Gisbert},
-  journal={(preprint)},
+@article{jimenez2020color,
+author = "Jose Jimenez-Luna and Miha Skalic and Nils Weskamp and Gisbert Schneider",
+title = "{Coloring Molecules with Explainable Artificial Intelligence for Preclinical Relevance Assessment}",
+year = "2020",
+month = "11",
+url = "https://chemrxiv.org/articles/preprint/Coloring_Molecules_with_Explainable_Artificial_Intelligence_for_Preclinical_Relevance_Assessment/13252286",
+doi = "10.26434/chemrxiv.13252286.v1"
 }
 
 ```
