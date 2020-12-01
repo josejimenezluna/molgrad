@@ -51,7 +51,7 @@ For instance, if we wanted to obtain feature colorings for nicotine for the hERG
 python molgrad/main.py -model_path molgrad/models/hERG_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
 ```
 
-This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (_i.e_. molecular weight, log_P_, TPSA, and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
+This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (_i.e_. molecular weight, log _P_, TPSA, and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
 
 Further parameters (such as feeding an entire .smi) for batch prediction and coloring can be checked via the provided help:
 
