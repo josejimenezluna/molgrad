@@ -56,8 +56,17 @@ def ensure_readability(ostrings, ovalues, read_mol_f):
     return strings, values
 
 
+def duplicate_analysis(df, key_col, val_col):
+    idx_dup_f = df.duplicated(subset=key_col, keep="first")
+    idx_dup = df.duplicated(subset=key_col, keep=False)
+    per_dup = np.sum(idx_dup_f) / len(df)
+    df_dup = df[idx_dup]
+    stds = df_dup.groupby(key_col)[val_col].std()
+    return per_dup, stds
+
+
 # hERG public data
-def process_herg(list_csvs, keep_operators=True):
+def process_herg(list_csvs, keep_operators=False):
     df = pd.read_csv(list_csvs[0], sep="\t")
 
     for idx, csv in enumerate(list_csvs):
@@ -75,6 +84,13 @@ def process_herg(list_csvs, keep_operators=True):
     ]
 
     df.Value = -np.log10(df.Value * 1e-9)  # pIC50 conversion
+    # per_dup, stds = duplicate_analysis(df, "Canonical_smiles", "Value")
+    # print(
+    #     "Percentage of duplicates for hERG dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+    #         per_dup, np.mean(stds), np.median(stds)
+    #     )
+    # )
+
     df.drop_duplicates(inplace=True)
 
     # average values with several measurements
@@ -169,6 +185,14 @@ def process_ppb():
     # join them all together
     df = pd.DataFrame({"inchi": inchis, "values": values})
 
+    # checking duplicates
+    per_dup, stds = duplicate_analysis(df, "inchi", "values")
+    print(
+        "Percentage of duplicates for PPB dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+            per_dup, np.mean(stds), np.median(stds)
+        )
+    )
+
     # average values w. equal inchi and check readability
     print("Averaging values and ensuring rdkit readability...")
     inchis, values = mean_by_key(df, "inchi", "values")
@@ -221,6 +245,14 @@ def process_caco2():
     values.extend(df1["Value"].tolist())
 
     df = pd.DataFrame({"inchi": inchis, "values": values})
+    per_dup, stds = duplicate_analysis(df, "inchi", "values")
+
+    print(
+        "Percentage of duplicates for CaCO2 dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+            per_dup, np.mean(stds), np.median(stds)
+        )
+    )
+
     uq_inchi = pd.unique(df["inchi"]).tolist()
 
     print("Averaging values and ensuring rdkit readability...")
@@ -255,7 +287,7 @@ if __name__ == "__main__":
 
     # hERG public data
     herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
-    process_herg(herg_list, keep_operators=True)
+    process_herg(herg_list, keep_operators=False)
 
     # caco2 data
     process_caco2()
