@@ -1,6 +1,6 @@
 # molgrad
 
-Supporting code for: Jiménez-Luna _et al_. "MolGrad: coloring molecules using explainable artificial intelligence", available as a preprint in [ChemRxiv](http://...)
+Supporting code for: Jiménez-Luna _et al._'s "Coloring molecules with explainable artificial intelligence for preclinical relevance assessment", available as a preprint in [ChemRxiv](https://chemrxiv.org/articles/preprint/Coloring_Molecules_with_Explainable_Artificial_Intelligence_for_Preclinical_Relevance_Assessment/13252286)
 
 
 
@@ -51,7 +51,7 @@ For instance, if we wanted to obtain feature colorings for nicotine for the hERG
 python molgrad/main.py -model_path molgrad/models/hERG_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
 ```
 
-This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (i.e. molecular weight, logp, tpsa and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
+This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (_i.e_. molecular weight, log _P_, TPSA, and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
 
 Further parameters (such as feeding an entire .smi) for batch prediction and coloring can be checked via the provided help:
 
@@ -86,10 +86,13 @@ A comma-separated file with examples drawn from the literature to validate this 
 If you use this code (or parts thereof), please use the following BibTeX entry:
 
 ```
-@article{jimenez2020molgrad,
-  title={MolGrad: coloring molecules using explainable artificial intelligence},
-  author={Jimenez-Luna, Jose and Skalic, Miha and Weskamp, Nils and Schneider, Gisbert},
-  journal={(preprint)},
+@article{jimenez2020color,
+author = "Jose Jimenez-Luna and Miha Skalic and Nils Weskamp and Gisbert Schneider",
+title = "{Coloring Molecules with Explainable Artificial Intelligence for Preclinical Relevance Assessment}",
+year = "2020",
+month = "11",
+url = "https://chemrxiv.org/articles/preprint/Coloring_Molecules_with_Explainable_Artificial_Intelligence_for_Preclinical_Relevance_Assessment/13252286",
+doi = "10.26434/chemrxiv.13252286.v1"
 }
 
 ```
