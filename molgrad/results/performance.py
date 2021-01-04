@@ -4,7 +4,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import kde
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 
 from molgrad.train import N_FOLDS, rmse
 from molgrad.utils import DATA_PATH, FIG_PATH
@@ -38,6 +38,7 @@ if __name__ == "__main__":
         y_hat = []
 
         rs = []
+        r2s = []
         rmses = []
 
         for idx_split in range(N_FOLDS):
@@ -51,14 +52,21 @@ if __name__ == "__main__":
             ).flatten()
 
             rs.append(np.corrcoef(y, yh)[0, 1])
+            r2s.append(r2_score(y, yh))
             rmses.append(rmse(y, yh))
 
             y_test.extend(y.tolist())
             y_hat.extend(yh.tolist())
 
         print(
-            "Dataset {} | R: {:.3f} ± {:.3f} | RMSE: {:.3f} ± {:.3f}".format(
-                data, np.mean(rs), np.std(rs), np.mean(rmses), np.std(rmses)
+            "Dataset {} | R: {:.3f} ± {:.3f} | R2: {:.3f} ± {:.3f} | RMSE: {:.3f} ± {:.3f}".format(
+                data,
+                np.mean(rs),
+                np.std(rs),
+                np.mean(r2s),
+                np.std(r2s),
+                np.mean(rmses),
+                np.std(rmses),
             )
         )
 
