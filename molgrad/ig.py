@@ -1,13 +1,8 @@
-import os
 from copy import deepcopy
 
-import numpy as np
 import torch
-from torch.utils.data import DataLoader
 
-from molgrad.net_utils import GraphData, collate_pair
 from molgrad.train import DEVICE
-from molgrad.utils import MODELS_PATH, PROCESSED_DATA_PATH
 
 
 def gen_steps(graph, g_feat, n_steps, version=2):

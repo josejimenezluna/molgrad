@@ -10,7 +10,7 @@ from rdkit.Chem import MolFromSmiles
 from rdkit.Chem.inchi import MolFromInchi, MolToInchi
 from tqdm import tqdm
 
-from molgrad.utils import DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH
+from molgrad.utils import DATA_PATH, PROCESSED_DATA_PATH
 
 RDLogger.DisableLog("rdApp.*")
 IUPAC_REST = "http://cactus.nci.nih.gov/chemical/structure/{}/inchi"
