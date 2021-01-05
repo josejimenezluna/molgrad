@@ -84,12 +84,12 @@ def process_herg(list_csvs, keep_operators=False):
     ]
 
     df.Value = -np.log10(df.Value * 1e-9)  # pIC50 conversion
-    # per_dup, stds = duplicate_analysis(df, "Canonical_smiles", "Value")
-    # print(
-    #     "Percentage of duplicates for hERG dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
-    #         per_dup, np.mean(stds), np.median(stds)
-    #     )
-    # )
+    per_dup, stds = duplicate_analysis(df, "Canonical_smiles", "Value")
+    print(
+        "Percentage of duplicates for hERG dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+            per_dup, np.mean(stds), np.median(stds)
+        )
+    )
 
     df.drop_duplicates(inplace=True)
 
@@ -188,7 +188,7 @@ def process_ppb():
     # checking duplicates
     per_dup, stds = duplicate_analysis(df, "inchi", "values")
     print(
-        "Percentage of duplicates for PPB dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+        "Percentage of duplicates for PPB dataset: {:.5f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
             per_dup, np.mean(stds), np.median(stds)
         )
     )
@@ -248,7 +248,7 @@ def process_caco2():
     per_dup, stds = duplicate_analysis(df, "inchi", "values")
 
     print(
-        "Percentage of duplicates for CaCO2 dataset: {:.3f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+        "Percentage of duplicates for CaCO2 dataset: {:.5f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
             per_dup, np.mean(stds), np.median(stds)
         )
     )
