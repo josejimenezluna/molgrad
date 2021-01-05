@@ -1,8 +1,6 @@
 import argparse
 import logging
-import os
 from tqdm import tqdm
-import pickle
 
 import numpy as np
 import pandas as pd
@@ -22,8 +20,6 @@ from molgrad.train import (
     N_EPOCHS,
     N_MESSPASS,
     NUM_WORKERS,
-    TASK_GUIDE,
-    rmse,
     train_loop,
 )
 from molgrad.utils import DATA_PATH, LOG_PATH, MODELS_PATH

@@ -1,7 +1,6 @@
 import numpy as np
 from IPython.display import SVG
-from rdkit import Chem
-from rdkit.Chem import MolFromInchi, rdDepictor
+from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.rdmolops import AddHs
 

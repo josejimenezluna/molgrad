@@ -1,8 +1,5 @@
-import os
-
 import dgl
 import numpy as np
-import pandas as pd
 import rdkit
 import torch
 from rdkit.Chem import GetPeriodicTable, MolFromSmiles
