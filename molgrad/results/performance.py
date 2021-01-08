@@ -26,12 +26,16 @@ LABEL_GUIDE = {
     "herg": r"$p\mathrm{IC}_{50}$ (hERG)",
 }
 
+PLOT_GUIDE = {0: (0, 0), 1: (0, 1), 2: (1, 0)}
+
+N_BINS = 300
+
 sigmoid = lambda x: 1 / (1 + np.exp(-x))
 
 if __name__ == "__main__":
     os.makedirs(FIG_PATH, exist_ok=True)
     # Regression plot for ppb, caco2, herg
-    f, axs = plt.subplots(1, len(LABEL_GUIDE) + 1, figsize=(18, 6))
+    f, axs = plt.subplots(2, 2, figsize=(17, 15))
 
     for idx_plot, data in enumerate(LABEL_GUIDE.keys()):
         y_test = []
@@ -73,25 +77,23 @@ if __name__ == "__main__":
         y_test = np.array(y_test)
         y_hat = np.array(y_hat)
 
-        # axs[idx_plot].scatter(y_test, y_hat, s=1.7)
-        nbins = 300
         k = kde.gaussian_kde([y_test, y_hat])
         xi, yi = np.mgrid[
-            y_test.min() : y_test.max() : nbins * 1j,
-            y_hat.min() : y_hat.max() : nbins * 1j,
+            y_test.min() : y_test.max() : N_BINS * 1j,
+            y_hat.min() : y_hat.max() : N_BINS * 1j,
         ]
         zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 
-        im = axs[idx_plot].pcolormesh(xi, yi, zi.reshape(xi.shape), cmap="cividis")
-        # e = f.colorbar(matplotlib.cm.ScalarMappable(), ax=axs[idx_plot])
+        im = axs[PLOT_GUIDE[idx_plot]].pcolormesh(
+            xi, yi, zi.reshape(xi.shape), cmap="gist_yarg"
+        )
         fmt = matplotlib.ticker.ScalarFormatter()
         fmt.set_scientific(True)
         fmt.set_powerlimits((-2, 4))
-        plt.colorbar(im, ax=axs[idx_plot], format=fmt)
+        plt.colorbar(im, ax=axs[PLOT_GUIDE[idx_plot]], format=fmt)
 
-        axs[idx_plot].set_ylabel(f"Pred. {LABEL_GUIDE[data]}")
-        axs[idx_plot].set_xlabel(f"Exp. {LABEL_GUIDE[data]}")
-        # axs[idx_plot].grid(alpha=0.5)
+        axs[PLOT_GUIDE[idx_plot]].set_ylabel(f"Pred. {LABEL_GUIDE[data]}")
+        axs[PLOT_GUIDE[idx_plot]].set_xlabel(f"Exp. {LABEL_GUIDE[data]}")
 
     # cyp values
 
@@ -117,11 +119,11 @@ if __name__ == "__main__":
     y_hat = np.concatenate(y_hat)
 
     fpr, tpr, _ = roc_curve(y_test, y_hat)
-    axs[3].plot(fpr, tpr, lw=1)
-    axs[3].plot([0, 1], [0, 1], color="grey", linestyle="--")
-    axs[3].grid(alpha=0.5)
-    axs[3].set_xlabel("Specificity (CYP3A4 inhibition)")
-    axs[3].set_ylabel("Sensitivity (CYP3A4 inhibition)")
+    axs[1, 1].plot(fpr, tpr, lw=1)
+    axs[1, 1].plot([0, 1], [0, 1], color="grey", linestyle="--")
+    axs[1, 1].grid(alpha=0.5)
+    axs[1, 1].set_xlabel("Specificity (CYP3A4 inhibition)")
+    axs[1, 1].set_ylabel("Sensitivity (CYP3A4 inhibition)")
 
     plt.tight_layout()
     plt.savefig(os.path.join(FIG_PATH, "graph_performance.pdf"))
