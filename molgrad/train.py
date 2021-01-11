@@ -17,6 +17,7 @@ from molgrad.utils import DATA_PATH, MODELS_PATH, LOG_PATH
 
 N_FOLDS = 10
 N_MESSPASS = 12
+SEED = 1337
 
 BATCH_SIZE = 32
 INITIAL_LR = 1e-4
@@ -174,7 +175,7 @@ if __name__ == "__main__":
         inchis = np.array(inchis)
         values = np.array(values)[:, np.newaxis]
         mask = np.array([True for l in range(values.shape[0])])[:, np.newaxis]
-        kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=1337)
+        kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
 
         for idx_split, (idx_train, idx_test) in enumerate(kf.split(inchis)):
             inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]

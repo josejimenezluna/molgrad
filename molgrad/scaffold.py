@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
         # Predicted difference
         w_path = os.path.join(MODELS_PATH, f"{data}_noHs.pt")
-        preds = predict(inchis, w_path, output_f=output_f).squeeze()
+        preds = predict(inchis, w_path, output_f=output_f).squeeze().cpu().numpy()
         np.save(os.path.join(DATA_PATH, f"{data}", "preds.npy"), arr=preds)
 
         print("Prod. R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
