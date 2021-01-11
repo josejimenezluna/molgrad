@@ -33,4 +33,8 @@ In order to better facilitate reproduction of the results presented on the manus
 
 ```
 
+If further technical information is needed toward replication/application of the presented approach, please feel free to open an issue in the repository, or [send us a mail](mailto:jose.jimenez@rethink.ethz.ch).
+
+## References
+
 [1] Sheridan, Robert P. "Interpretation of QSAR models by coloring atoms according to changes in predicted activity: how robust is it?." Journal of Chemical Information and Modeling 59.4 (2019): 1324-1337.
