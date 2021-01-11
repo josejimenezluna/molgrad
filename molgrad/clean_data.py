@@ -35,6 +35,7 @@ def smi_to_inchi_with_val(smiles, ovalues):
 
 
 def mean_by_key(df, key_col, val_col):
+    #TODO: could be replaced by a groupby op.
     uq_keys = pd.unique(df[key_col]).tolist()
     uq_values = []
 

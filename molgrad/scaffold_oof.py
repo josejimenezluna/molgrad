@@ -50,7 +50,7 @@ if __name__ == "__main__":
                 # Experimental difference
                 diff_exp = diff_matrix(values_test)
                 np.save(
-                    os.path.join(DATA_PATH, f"{data}", f"diff_exp_{idx_split}.npy"),
+                    os.path.join(DATA_PATH, f"{data}", f"diff_exp_fold{idx_split}.npy"),
                     arr=diff_exp,
                 )
 
