@@ -16,7 +16,7 @@ In order to better facilitate reproduction of the results presented on the manus
 │   ├── models/ : contains trained message-passing models for the endpoints used in this study.
 │   ├── net.py : definition of the message-passing neural network used in this study.
 │   ├── net_utils.py : utility functions for the featurization and data-feeding routines used for message-passing neural network models.
-│   ├── notebooks/ : contains several notebooks exploring individual coloring examples, and global importance analyses (__e.g.__ those presented in the manuscript figures and others)
+│   ├── notebooks/ : contains several notebooks exploring individual coloring examples, and global importance analyses (e.g. those presented in the manuscript figures and others)
 │   ├── prod.py : contains production utility functions for other files and notebooks.
 │   ├── results
 │   │   ├── descriptive.py : plotting code for Figure 1.
@@ -32,3 +32,5 @@ In order to better facilitate reproduction of the results presented on the manus
 └── README.md
 
 ```
+
+[1] Sheridan, Robert P. "Interpretation of QSAR models by coloring atoms according to changes in predicted activity: how robust is it?." Journal of Chemical Information and Modeling 59.4 (2019): 1324-1337.
