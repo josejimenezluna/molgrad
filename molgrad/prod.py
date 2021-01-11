@@ -4,7 +4,12 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from molgrad.net import MPNNPredictor
-from molgrad.net_utils import GraphData, collate_pair_prod, mol_to_dgl, get_global_features
+from molgrad.net_utils import (
+    GraphData,
+    collate_pair_prod,
+    mol_to_dgl,
+    get_global_features,
+)
 from molgrad.train import DEVICE, NUM_WORKERS, N_MESSPASS
 
 
