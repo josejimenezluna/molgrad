@@ -93,6 +93,7 @@ def diff_matrix(values):
 
 if __name__ == "__main__":
     for data in TASK_GUIDE.keys():
+        print(f"Now computing scaffold similarity and difference matrices for endpoint {data}")
         with open(os.path.join(DATA_PATH, f"{data}", f"data_{data}.pt"), "rb") as handle:
             inchis, values = pickle.load(handle)
 
