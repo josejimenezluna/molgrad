@@ -117,7 +117,5 @@ if __name__ == "__main__":
         preds = predict(inchis, w_path, output_f=output_f).squeeze().cpu().numpy()
         np.save(os.path.join(DATA_PATH, f"{data}", "preds.npy"), arr=preds)
 
-        print("Prod. R: {:.3f}".format(np.corrcoef(values, preds)[0, 1]))
-
         diff_hat = diff_matrix(preds)
         np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat.npy"), arr=diff_hat)
