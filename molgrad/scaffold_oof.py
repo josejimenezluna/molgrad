@@ -31,40 +31,40 @@ if __name__ == "__main__":
         else:
             output_f = None
 
-            kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
+        kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
 
-            for idx_split, (_, idx_test) in enumerate(kf.split(inchis)):
-                print("Split {}/{} running...".format(idx_split + 1, N_FOLDS))
-                inchis_test, values_test = inchis[idx_test].tolist(), values[idx_test, :].squeeze().tolist()
+        for idx_split, (_, idx_test) in enumerate(kf.split(inchis)):
+            print("Split {}/{} running...".format(idx_split + 1, N_FOLDS))
+            inchis_test, values_test = inchis[idx_test].tolist(), values[idx_test, :].squeeze().tolist()
 
-                # Chemical similarity oof
-                sims = sim_matrix(inchis_test)
+            # Chemical similarity oof
+            sims = sim_matrix(inchis_test)
 
-                np.save(
-                    os.path.join(
-                        DATA_PATH, f"{data}", f"sim_{data}_fold{idx_split}.npy"
-                    ),
-                    arr=sims,
-                )
+            np.save(
+                os.path.join(
+                    DATA_PATH, f"{data}", f"sim_{data}_fold{idx_split}.npy"
+                ),
+                arr=sims,
+            )
 
-                # Experimental difference
-                diff_exp = diff_matrix(values_test)
-                np.save(
-                    os.path.join(DATA_PATH, f"{data}", f"diff_exp_fold{idx_split}.npy"),
-                    arr=diff_exp,
-                )
+            # Experimental difference
+            diff_exp = diff_matrix(values_test)
+            np.save(
+                os.path.join(DATA_PATH, f"{data}", f"diff_exp_fold{idx_split}.npy"),
+                arr=diff_exp,
+            )
 
-                # Predicted difference
-                w_path = os.path.join(MODELS_PATH, f"{data}_noHs_fold{idx_split}.pt")
-                preds = predict(inchis_test, w_path, output_f=output_f).squeeze().cpu().numpy()
-                np.save(
-                    os.path.join(DATA_PATH, f"{data}", f"preds_fold{idx_split}.npy"),
-                    arr=preds,
-                )
+            # Predicted difference
+            w_path = os.path.join(MODELS_PATH, f"{data}_noHs_fold{idx_split}.pt")
+            preds = predict(inchis_test, w_path, output_f=output_f).squeeze().cpu().numpy()
+            np.save(
+                os.path.join(DATA_PATH, f"{data}", f"preds_fold{idx_split}.npy"),
+                arr=preds,
+            )
 
-                diff_hat = diff_matrix(preds)
-                np.save(
-                    os.path.join(DATA_PATH, f"{data}", f"diff_hat_fold{idx_split}.npy"),
-                    arr=diff_hat,
-                )
+            diff_hat = diff_matrix(preds)
+            np.save(
+                os.path.join(DATA_PATH, f"{data}", f"diff_hat_fold{idx_split}.npy"),
+                arr=diff_hat,
+            )
 
