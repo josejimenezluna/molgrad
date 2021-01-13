@@ -68,29 +68,6 @@ def sim_matrix(inchis):
     return sims
 
 
-def diff_matrix(values):
-    """Computes pairwise difference matrix of values 
-
-    Parameters
-    ----------
-    values : list
-        list of numeric values
-
-    Returns
-    -------
-    np.ndarray
-        Array with pairwise differences
-    """
-    n_total = len(values)
-    diff = np.zeros((n_total, n_total), dtype=np.float32)
-    for idx_i, val_i in enumerate(values):
-        for idx_j, val_j in enumerate(values):
-            if idx_i < idx_j:
-                diff[idx_i, idx_j] = val_i - val_j
-    diff -= diff.copy().T
-    return diff
-
-
 if __name__ == "__main__":
     for data in TASK_GUIDE.keys():
         print(f"Now computing scaffold similarity and difference matrices for endpoint {data}")
@@ -110,7 +87,7 @@ if __name__ == "__main__":
             pickle.dump(sims, handle)
 
         # Experimental difference
-        diff_exp = diff_matrix(values)
+        diff_exp = np.subtract.outer(values, values)
         np.save(os.path.join(DATA_PATH, f"{data}", "diff_exp.npy"), arr=diff_exp)
 
         # Predicted difference
@@ -118,5 +95,5 @@ if __name__ == "__main__":
         preds = predict(inchis, w_path, output_f=output_f).squeeze().cpu().numpy()
         np.save(os.path.join(DATA_PATH, f"{data}", "preds.npy"), arr=preds)
 
-        diff_hat = diff_matrix(preds)
+        diff_hat = np.subtract.outer(preds, preds)
         np.save(os.path.join(DATA_PATH, f"{data}", "diff_hat.npy"), arr=diff_hat)

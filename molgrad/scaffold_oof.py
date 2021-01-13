@@ -6,7 +6,7 @@ import torch
 from sklearn.model_selection import KFold
 
 from molgrad.prod import predict
-from molgrad.scaffold import diff_matrix, sim_matrix
+from molgrad.scaffold import sim_matrix
 from molgrad.train import N_FOLDS, SEED, TASK_GUIDE
 from molgrad.utils import DATA_PATH, MODELS_PATH
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
             )
 
             # Experimental difference
-            diff_exp = diff_matrix(values_test)
+            diff_exp = np.subtract.outer(values_test, values_test)
             np.save(
                 os.path.join(DATA_PATH, f"{data}", f"diff_exp_fold{idx_split}.npy"),
                 arr=diff_exp,
@@ -62,9 +62,8 @@ if __name__ == "__main__":
                 arr=preds,
             )
 
-            diff_hat = diff_matrix(preds)
+            diff_hat = np.subtract.outer(preds, preds)
             np.save(
                 os.path.join(DATA_PATH, f"{data}", f"diff_hat_fold{idx_split}.npy"),
                 arr=diff_hat,
             )
-
