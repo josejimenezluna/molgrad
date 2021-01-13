@@ -87,7 +87,7 @@ def diff_matrix(values):
         for idx_j, val_j in enumerate(values):
             if idx_i < idx_j:
                 diff[idx_i, idx_j] = val_i - val_j
-    diff += diff.copy().T
+    diff -= diff.copy().T
     return diff
 
 
