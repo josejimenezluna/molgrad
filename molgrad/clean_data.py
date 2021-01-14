@@ -174,8 +174,11 @@ def process_ppb(neutralize=False):
         if ans.status_code == 200:
             inchi = ans.content.decode("utf8")
             mol = MolFromInchi(inchi)
-            if mol is not None:
-                inchis.append(inchi)
+            # Use same inchi specification as rdkit...
+            new_inchi = MolToInchi(mol)
+            new_mol = MolFromInchi(new_inchi)
+            if new_mol is not None:
+                inchis.append(new_inchi)
                 values.append(val)
 
     # fifth dataset
@@ -212,7 +215,7 @@ def process_ppb(neutralize=False):
     # checking duplicates
     per_dup, stds = duplicate_analysis(df, "inchi", "values")
     print(
-        "Percentage of duplicates for PPB dataset: {:.5f}, with average std.: {:.3f}, and median std.:{:.3f}".format(
+        "Percentage of duplicates for PPB dataset: {:.5f}, with average std.: {}, and median std.:{}".format(
             per_dup, np.mean(stds), np.median(stds)
         )
     )
@@ -329,13 +332,13 @@ if __name__ == "__main__":
 
     # hERG public data
     herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
-    process_herg(herg_list, keep_operators=False, neutralize=True)
+    process_herg(herg_list, keep_operators=False, neutralize=False)
 
     # caco2 data
-    process_caco2(neutralize=True)
+    process_caco2(neutralize=False)
 
     # ppb data
-    process_ppb(neutralize=True)
+    process_ppb(neutralize=False)
 
     # cyp data
-    process_cyp(neutralize=True)
+    process_cyp(neutralize=False)
