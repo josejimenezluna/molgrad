@@ -1,12 +1,13 @@
 import os
 import pickle
 from glob import glob
+from joblib.parallel import Parallel
 
 import numpy as np
 import pandas as pd
 import requests
 from rdkit import RDLogger
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import MolFromSmiles, MolFromSmarts
 from rdkit.Chem.inchi import MolFromInchi, MolToInchi
 from tqdm import tqdm
 
@@ -35,7 +36,7 @@ def smi_to_inchi_with_val(smiles, ovalues):
 
 
 def mean_by_key(df, key_col, val_col):
-    #TODO: could be replaced by a groupby op.
+    # TODO: could be replaced by a groupby op.
     uq_keys = pd.unique(df[key_col]).tolist()
     uq_values = []
 
@@ -66,8 +67,25 @@ def duplicate_analysis(df, key_col, val_col):
     return per_dup, stds
 
 
+PATTERN = MolFromSmarts("[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]")
+
+
+def neutralize_atoms(mol, pattern):
+    at_matches = mol.GetSubstructMatches(pattern)
+    at_matches_list = [y[0] for y in at_matches]
+    if len(at_matches_list) > 0:
+        for at_idx in at_matches_list:
+            atom = mol.GetAtomWithIdx(at_idx)
+            chg = atom.GetFormalCharge()
+            hcount = atom.GetTotalNumHs()
+            atom.SetFormalCharge(0)
+            atom.SetNumExplicitHs(hcount - chg)
+            atom.UpdatePropertyCache()
+    return mol
+
+
 # hERG public data
-def process_herg(list_csvs, keep_operators=False):
+def process_herg(list_csvs, keep_operators=False, neutralize=False):
     df = pd.read_csv(list_csvs[0], sep="\t")
 
     for idx, csv in enumerate(list_csvs):
@@ -101,11 +119,17 @@ def process_herg(list_csvs, keep_operators=False):
     print("Dropping faulty molecules...")
     inchis, values = smi_to_inchi_with_val(uq_smiles, uq_values)
 
+    if neutralize:
+        inchis = [
+            MolToInchi(neutralize_atoms(MolFromInchi(inchi), PATTERN))
+            for inchi in inchis
+        ]
+
     with open(os.path.join(DATA_PATH, "herg", "data_herg.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
 
 
-def process_ppb():
+def process_ppb(neutralize=False):
     inchis = []
     values = []
 
@@ -200,11 +224,17 @@ def process_ppb():
 
     inchis, values = ensure_readability(inchis, values, MolFromInchi)
 
+    if neutralize:
+        inchis = [
+            MolToInchi(neutralize_atoms(MolFromInchi(inchi), PATTERN))
+            for inchi in inchis
+        ]
+
     with open(os.path.join(DATA_PATH, "ppb", "data_ppb.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
 
 
-def process_caco2():
+def process_caco2(neutralize=False):
     # peerJ data
     df1 = pd.read_excel(os.path.join(DATA_PATH, "caco2", "peerj-03-1405-s001.xls"))
     df1 = df1.loc[:, ["InChI", "Caco-2 Papp * 10^6 cm/s"]]
@@ -268,16 +298,28 @@ def process_caco2():
             inchis.append(inchi)
             values.append(df_uq["values"].mean())
 
+    if neutralize:
+        inchis = [
+            MolToInchi(neutralize_atoms(MolFromInchi(inchi), PATTERN))
+            for inchi in inchis
+        ]
+
     with open(os.path.join(DATA_PATH, "caco2", "data_caco2.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
 
 
-def process_cyp():
+def process_cyp(neutralize=False):
     df = pd.read_csv(os.path.join(DATA_PATH, "cyp", "CYP3A4.csv"), header=0, sep=";")
     df["Value"] = [1 if class_ == "Active" else 0 for class_ in df["Class"]]
     inchis, values = smi_to_inchi_with_val(df["SMILES"], df["Value"])
     df = pd.DataFrame({"inchi": inchis, "values": values})
     inchis, values = mean_by_key(df, "inchi", "values")
+
+    if neutralize:
+        inchis = [
+            MolToInchi(neutralize_atoms(MolFromInchi(inchi), PATTERN))
+            for inchi in inchis
+        ]
 
     with open(os.path.join(DATA_PATH, "cyp", "data_cyp.pt"), "wb") as handle:
         pickle.dump([inchis, values], handle)
