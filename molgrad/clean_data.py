@@ -1,7 +1,6 @@
 import os
 import pickle
 from glob import glob
-from joblib.parallel import Parallel
 
 import numpy as np
 import pandas as pd
@@ -330,13 +329,13 @@ if __name__ == "__main__":
 
     # hERG public data
     herg_list = glob(os.path.join(DATA_PATH, "herg", "part*.tsv"))
-    process_herg(herg_list, keep_operators=False)
+    process_herg(herg_list, keep_operators=False, neutralize=True)
 
     # caco2 data
-    process_caco2()
+    process_caco2(neutralize=True)
 
     # ppb data
-    process_ppb()
+    process_ppb(neutralize=True)
 
     # cyp data
-    process_cyp()
+    process_cyp(neutralize=True)
