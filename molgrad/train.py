@@ -178,6 +178,7 @@ if __name__ == "__main__":
         kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
 
         for idx_split, (idx_train, idx_test) in enumerate(kf.split(inchis)):
+            print(f"Fold {idx_split}/{N_FOLDS}...")
             inchis_train, inchis_test = inchis[idx_train], inchis[idx_test]
             values_train, values_test = values[idx_train, :], values[idx_test, :]
             mask_train, mask_test = mask[idx_train, :], mask[idx_test, :]
