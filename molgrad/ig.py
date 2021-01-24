@@ -30,38 +30,6 @@ def gen_steps(graph, g_feat, n_steps, version=2):
     return graphs, g_feats
 
 
-# def noise_tunnel(graph, g_feat, n_samples=10, version=2, mean=0.0, std=1.0):
-#     """Noise tunnel prototype
-
-#     Parameters
-#     ----------
-#     graph : DGL graph
-#     g_feat : torch.Tensor
-#     n_samples : int, optional
-#         number of samples to add noise to, by default 10
-#     version : int, optional
-#     mean : float, optional
-#     std : float, optional
-
-#     Returns
-#     -------
-#     list
-#         A list of graphs with their respective node and edge
-#         features with noise added to them.
-#     """
-#     graphs = []
-
-#     feat = graph.ndata['feat']
-#     e_feat = graph.edata['feat']
-
-#     for _ in range(n_samples):
-#         g = deepcopy(graph)
-#         g.ndata['feat'] = feat + (mean + std * torch.randn(feat.shape))
-#         if version == 3:
-#             g.edata['feat'] = e_feat + (mean + std * torch.randn(e_feat.shape))
-#         graphs.append(g)
-#     return graphs
-
 
 def integrated_gradients(
     graph, g_feat, model, task=0, n_steps=50, version=2, feature_scale=True
