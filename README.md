@@ -18,7 +18,7 @@ conda env create -f environment.yml
 To use the graph neural-network models that were trained for the manuscript (plasma protein binding, Caco-2 passive permeability, hERG & CYP3A4 inhibition), you need to download them from:
 
 ``` bash
-wget https://polybox.ethz.ch/index.php/s/5KrmRzDsHfsgfYJ/download -O models.tar.gz
+wget https://polybox.ethz.ch/index.php/s/dDDMzi3rTbqkWOV/download -O models.tar.gz
 tar -xf models.tar.gz
 ```
 
