@@ -18,9 +18,6 @@ In order to better facilitate reproduction of the results presented on the manus
 │   ├── net_utils.py : utility functions for the featurization and data-feeding routines used for message-passing neural network models.
 │   ├── notebooks/ : contains several notebooks exploring individual coloring examples, and global importance analyses (e.g. those presented in the manuscript figures and others)
 │   ├── prod.py : contains production utility functions for other files and notebooks.
-│   ├── results
-│   │   ├── descriptive.py : plotting code for Figure 1.
-│   │   ├── performance.py : plotting code for Figure 3.
 │   ├── scaffold_oof.py : contains logic regarding necessary generated files for the out-of-fold property cliff analyses.
 │   ├── scaffold.py : same as scaffold_oof.py, but for the production models and training datasets used in this work.
 │   ├── train_ext.py : contains code to allow users to train message-passing models on their own endpoints. Please check the README.md file for more details on how to do this.
