@@ -141,7 +141,7 @@ if __name__ == "__main__":
     if len(failed_idx) > 0:
         LOGGER.warning(f"{len(failed_idx)} SMILES strings could not be parsed by RDkit. Removing them from training.")
         smiles = smiles[np.setdiff1d(np.arange(len(smiles)), failed_idx)]
-        values = values[np.setdiff1d(np.arange(len(smiles)), failed_idx)]
+        values = values[np.setdiff1d(np.arange(len(values)), failed_idx)]
     
 
     values = values[:, np.newaxis]
