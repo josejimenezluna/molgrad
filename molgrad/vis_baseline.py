@@ -17,7 +17,7 @@ def molecule_importance_diff(
     dummy_atom_no=47,
     eps=1e-3,
     vis_factor=0.1,
-    normalize=True,
+    normalize=False,
     img_width=400,
     img_height=200,
     addHs=False,
