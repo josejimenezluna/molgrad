@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/244630479.svg)](https://zenodo.org/badge/latestdoi/244630479)
 
 
-Supporting code for: Jiménez-Luna _et al._'s "Coloring molecules with explainable artificial intelligence for preclinical relevance assessment", available in JCIM (https://pubs.acs.org/doi/10.1021/acs.jcim.0c01344)
+Supporting code for: Jiménez-Luna _et al._'s "Coloring molecules with explainable artificial intelligence for preclinical relevance assessment", available in [JCIM](https://pubs.acs.org/doi/10.1021/acs.jcim.0c01344)
 
 
 
