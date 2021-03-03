@@ -2,7 +2,7 @@ import os
 import pickle
 
 import numpy as np
-from joblib import dump, load
+from joblib import dump
 from rdkit.Chem.inchi import MolFromInchi
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import KFold

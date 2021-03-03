@@ -9,7 +9,6 @@ from rdkit.Chem.inchi import MolFromInchi
 from rdkit.Chem.Lipinski import NumHDonors
 from rdkit.Chem.rdMolDescriptors import CalcTPSA
 from rdkit.Chem.rdmolops import AddHs
-from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from torch.utils.data import Dataset
 
 ATOM_TYPES = [
