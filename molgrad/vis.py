@@ -7,7 +7,6 @@ from rdkit.Chem.rdmolops import AddHs
 from molgrad.ig import integrated_gradients
 from molgrad.net_utils import get_global_features, mol_to_dgl
 
-from rdkit.Chem import rdDepictor
 rdDepictor.SetPreferCoordGen(True)
 
 GREEN_COL = (0, 1, 0)
