@@ -232,7 +232,7 @@ class GraphData(Dataset):
                 self.mask[idx, :],
             )
         else:
-            return (mol_to_dgl(mol), get_global_features(mol))
+            return (mol_to_dgl(mol), get_global_features(mol) * 0.0)
 
     def __len__(self):
         return len(self.strs)
