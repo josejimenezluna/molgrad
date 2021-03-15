@@ -40,7 +40,6 @@ def predict(
     sample_item = data[0]
     a_dim = sample_item[0].ndata["feat"].shape[1]
     e_dim = sample_item[0].edata["feat"].shape[1]
-    g_dim = len(sample_item[1])
 
     loader = DataLoader(
         data,
