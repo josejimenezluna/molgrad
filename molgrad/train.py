@@ -56,15 +56,14 @@ def train_loop(loader, model, loss_fn, opt):
 
     losses = []
 
-    for g, g_feat, label, mask in progress:
+    for g, label, mask in progress:
         g = g.to(DEVICE)
-        g_feat = g_feat.to(DEVICE)
         label = label.to(DEVICE)
         mask = mask.to(DEVICE)
         label = label[mask]
 
         opt.zero_grad()
-        out = model(g, g_feat)
+        out = model(g)
 
         out = out[mask]
         loss = loss_fn(out, label)
@@ -103,11 +102,10 @@ def eval_loop(loader, model, progress=True):
     yhats = []
     masks = []
 
-    for g, g_feat, label, mask in loader:
+    for g, label, mask in loader:
         with torch.no_grad():
             g = g.to(DEVICE)
-            g_feat = g_feat.to(DEVICE)
-            out = model(g, g_feat)
+            out = model(g)
             ys.append(label.cpu())
             yhats.append(out.cpu())
             masks.append(mask)
@@ -189,7 +187,6 @@ if __name__ == "__main__":
             sample_item = data_train[0]
             a_dim = sample_item[0].ndata["feat"].shape[1]
             e_dim = sample_item[0].edata["feat"].shape[1]
-            g_dim = len(sample_item[1])
 
             loader_train = DataLoader(
                 data_train,
@@ -210,7 +207,6 @@ if __name__ == "__main__":
             model = MPNNPredictor(
                 node_in_feats=a_dim,
                 edge_in_feats=e_dim,
-                global_feats=g_dim,
                 n_tasks=values.shape[1],
                 num_step_message_passing=N_MESSPASS,
                 output_f=None,

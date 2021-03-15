@@ -170,27 +170,6 @@ def mol_to_dgl(mol):
     return g
 
 
-def get_global_features(mol):
-    """Computes global-level features for a molecule.
-
-    Parameters
-    ----------
-    mol : rdkit mol
-
-    Returns
-    -------
-    [np.ndarray]
-        Global-level features
-    """
-    # MW, TPSA, logP, n.hdonors
-    mw = MolWt(mol)
-    tpsa = CalcTPSA(mol)
-    logp = MolLogP(mol)
-    n_hdonors = NumHDonors(mol)
-
-    desc = np.array([mw, tpsa, logp, n_hdonors], dtype=np.float32)
-    return desc
-
 
 class GraphData(Dataset):
     def __init__(self, strs, labels=None, mask=None, train=True, add_hs=True, inchi=True):
@@ -227,12 +206,11 @@ class GraphData(Dataset):
         if self.train:
             return (
                 mol_to_dgl(mol),
-                get_global_features(mol),
                 self.labels[idx, :],
                 self.mask[idx, :],
             )
         else:
-            return (mol_to_dgl(mol), get_global_features(mol) * 0.0)
+            return mol_to_dgl(mol)
 
     def __len__(self):
         return len(self.strs)
@@ -249,11 +227,10 @@ def collate_pair(samples):
     -------
     tuple
     """
-    graphs_i, g_feats, labels, masks = map(list, zip(*samples))
+    graphs_i, labels, masks = map(list, zip(*samples))
     batched_graph_i = dgl.batch(graphs_i)
     return (
         batched_graph_i,
-        torch.as_tensor(g_feats),
         torch.as_tensor(labels),
         torch.as_tensor(masks),
     )
@@ -270,5 +247,5 @@ def collate_pair_prod(samples):
     -------
     tuple
     """
-    graphs_i, g_feats = map(list, zip(*samples))
-    return dgl.batch(graphs_i), torch.as_tensor(g_feats)
+    graphs_i = map(list, zip(*samples))
+    return dgl.batch(graphs_i)

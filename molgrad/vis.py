@@ -5,7 +5,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.rdmolops import AddHs
 
 from molgrad.ig import integrated_gradients
-from molgrad.net_utils import get_global_features, mol_to_dgl
+from molgrad.net_utils import mol_to_dgl
 
 from rdkit.Chem import rdDepictor
 rdDepictor.SetPreferCoordGen(True)
@@ -134,10 +134,8 @@ def molecule_importance(
     if addHs:
         mol = AddHs(mol)
     graph = mol_to_dgl(mol)
-    g_feat = get_global_features(mol) * 0.0
-    atom_importance, bond_importance, global_importance = integrated_gradients(
+    atom_importance, bond_importance = integrated_gradients(
         graph,
-        g_feat,
         model,
         task=task,
         n_steps=n_steps,
@@ -178,4 +176,4 @@ def molecule_importance(
     )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText().replace("svg:", "")
-    return svg, SVG(svg), atom_importance, bond_importance, global_importance
+    return svg, SVG(svg), atom_importance, bond_importance

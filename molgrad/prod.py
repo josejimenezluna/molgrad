@@ -8,7 +8,6 @@ from molgrad.net_utils import (
     GraphData,
     collate_pair_prod,
     mol_to_dgl,
-    get_global_features,
 )
 from molgrad.train import DEVICE, NUM_WORKERS, N_MESSPASS
 
@@ -57,7 +56,6 @@ def predict(
     model = MPNNPredictor(
         node_in_feats=a_dim,
         edge_in_feats=e_dim,
-        global_feats=g_dim,
         n_tasks=n_tasks,
         num_step_message_passing=N_MESSPASS,
         output_f=output_f,
@@ -77,8 +75,5 @@ def predict(
 
 
 def predict_mol(mol, model):
-    pred = model(
-        mol_to_dgl(mol).to(DEVICE),
-        torch.Tensor(get_global_features(mol)[np.newaxis, :]).cuda(),
-    )
+    pred = model(mol_to_dgl(mol).to(DEVICE))
     return pred[0]
