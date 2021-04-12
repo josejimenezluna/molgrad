@@ -89,14 +89,6 @@ A comma-separated file with examples drawn from the literature to validate this 
 If you use this code (or parts thereof), please use the following BibTeX entry:
 
 ```
-
-
-
-
-
-
-
-
 @article{jimenez2021coloring,
 author = {Jiménez-Luna, José and Skalic, Miha and Weskamp, Nils and Schneider, Gisbert},
 title = {Coloring Molecules with Explainable Artificial Intelligence for Preclinical Relevance Assessment},
@@ -106,7 +98,4 @@ number = {3},
 pages = {1083-1094},
 year = {2021},
 }
-
-
-
 ```
