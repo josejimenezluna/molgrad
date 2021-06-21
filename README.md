@@ -9,10 +9,18 @@ Supporting code for: Jiménez-Luna _et al._'s "Coloring molecules with explainab
 
 ## Installation
 
-The recommended method of usage is via the Anaconda Python distribution. One can use the provided conda environment in the repository (should work for most *nix systems):
+The recommended method of usage is via the Anaconda Python distribution. One can use one of the provided conda environments in the repository (should work for most *nix systems):
+
+If a CUDA-capable GPU is available, use the `environment.yml` file:
 
 ```bash
 conda env create -f environment.yml
+```
+
+For a CPU-only installation, use the `environment_cpu.yml` file instead:
+
+```bash
+conda env create -f environment_cpu.yml
 ```
 
 To use the graph neural-network models that were trained for the manuscript (plasma protein binding, Caco-2 passive permeability, hERG & CYP3A4 inhibition), you need to download them from:
@@ -41,7 +49,7 @@ tar -xf data.tar.gz
 
 ## Usage
 
-In order to generate explanations for a particular molecule, given a trained model, one only needs to call the `main.py` script. A CUDA-capable GPU is encouraged, but not required:
+In order to generate explanations for a particular molecule, given a trained model, one only needs to call the `main.py` script. 
 
 ```bash
 python molgrad/main.py -model_path model_weights.pt -smi SMILES -output_f RESULT_DIR
@@ -51,7 +59,7 @@ python molgrad/main.py -model_path model_weights.pt -smi SMILES -output_f RESULT
 For instance, if we wanted to obtain feature colorings for nicotine for the hERG inhibition pre-trained endpoint, and store it under a home subfolder named `results`, one would do:
 
 ```bash
-python molgrad/main.py -model_path molgrad/models/hERG_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
+python molgrad/main.py -model_path models/herg_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
 ```
 
 This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (_i.e_. molecular weight, log _P_, TPSA, and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
