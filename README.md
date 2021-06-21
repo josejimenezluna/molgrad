@@ -26,8 +26,8 @@ conda env create -f environment_cpu.yml
 To use the graph neural-network models that were trained for the manuscript (plasma protein binding, Caco-2 passive permeability, hERG & CYP3A4 inhibition), you need to download them from:
 
 ``` bash
-wget https://polybox.ethz.ch/index.php/s/dDDMzi3rTbqkWOV/download -O models.tar.gz
-tar -xf models.tar.gz
+wget https://polybox.ethz.ch/index.php/s/dDDMzi3rTbqkWOV/download -O molgrad/models.tar.gz
+tar -xf molgrad/models.tar.gz -C molgrad/
 ```
 
 Then activate the environment and prepend the folder to your PYTHONPATH environment variable:
@@ -59,7 +59,7 @@ python molgrad/main.py -model_path model_weights.pt -smi SMILES -output_f RESULT
 For instance, if we wanted to obtain feature colorings for nicotine for the hERG inhibition pre-trained endpoint, and store it under a home subfolder named `results`, one would do:
 
 ```bash
-python molgrad/main.py -model_path models/herg_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
+python molgrad/main.py -model_path molgrad/models/herg_noHs.pt -smi "CN1CCCC1C2=CN=CC=C2" -output_f $HOME/results/
 ```
 
 This will create a comma-separated file `global.csv` in that folder, with feature attributions corresponding to global variables (_i.e_. molecular weight, log _P_, TPSA, and number of hydrogen donors). Another subfolder `svg` will be created with the produced feature colorings.
