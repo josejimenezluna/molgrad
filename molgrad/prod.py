@@ -79,6 +79,6 @@ def predict(
 def predict_mol(mol, model):
     pred = model(
         mol_to_dgl(mol).to(DEVICE),
-        torch.Tensor(get_global_features(mol)[np.newaxis, :]).cuda(),
+        torch.Tensor(get_global_features(mol)[np.newaxis, :]).to(DEVICE),
     )
     return pred[0]
