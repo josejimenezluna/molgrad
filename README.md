@@ -42,8 +42,8 @@ export PYTHONPATH=/path_to_repo_root/:$PYTHONPATH
 All the training data used in this study can be freely downloaded from:
 
 ```bash
-wget https://polybox.ethz.ch/index.php/s/K0orABbeJmwOUEh/download -O data.tar.gz
-tar -xf data.tar.gz
+wget https://polybox.ethz.ch/index.php/s/K0orABbeJmwOUEh/download -O molgrad/data.tar.gz
+tar -xf molgrad/data.tar.gz -C molgrad/
 ```
 
 
