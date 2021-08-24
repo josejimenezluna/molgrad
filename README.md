@@ -26,7 +26,7 @@ conda env create -f environment_cpu.yml
 To use the graph neural-network models that were trained for the manuscript (plasma protein binding, Caco-2 passive permeability, hERG & CYP3A4 inhibition), you need to download them from:
 
 ``` bash
-wget https://polybox.ethz.ch/index.php/s/dDDMzi3rTbqkWOV/download -O molgrad/models.tar.gz
+wget https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/501185/models.tar.gz -O molgrad/models.tar.gz
 tar -xf molgrad/models.tar.gz -C molgrad/
 ```
 
@@ -42,7 +42,7 @@ export PYTHONPATH=/path_to_repo_root/:$PYTHONPATH
 All the training data used in this study can be freely downloaded from:
 
 ```bash
-wget https://polybox.ethz.ch/index.php/s/K0orABbeJmwOUEh/download -O molgrad/data.tar.gz
+wget hhttps://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/501185/data.tar.gz -O molgrad/data.tar.gz
 tar -xf molgrad/data.tar.gz -C molgrad/
 ```
 
